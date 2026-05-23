@@ -8,33 +8,119 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-    
-    :root {
-      --primary: #7c3aed;
-    }
-    
-    body {
-      font-family: 'Outfit', system_ui, sans-serif;
-    }
-    
-    .font-mono {
-      font-family: 'Space Grotesk', ui-monospace, monospace;
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+    body { font-family: 'Outfit', system_ui, sans-serif; background: #04040b; color: white; }
+    .font-mono { font-family: 'Space Grotesk', monospace; }
+    .glass { background: rgba(16, 16, 34, 0.92); backdrop-filter: blur(20px); border: 1px solid rgba(124, 58, 237, 0.2); }
+    .saturn-card { background: #101022; border: 1px solid #1c1c38; transition: all 0.3s; }
+    .saturn-card:hover { border-color: #7c3aed; box-shadow: 0 0 25px rgba(124, 58, 237, 0.15); }
+    .section { display: none; }
+    .section.active { display: block; }
+    .bottom-nav { background: rgba(16, 16, 34, 0.95); backdrop-filter: blur(20px); }
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+
+  <!-- Top Bar -->
+  <div class="sticky top-0 z-50 glass border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div onclick="handleLogoClick()" class="flex items-center gap-3 cursor-pointer">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-2xl">🪐</div>
+        <span class="text-3xl font-bold tracking-tighter">SATURN</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="goToHome()" class="px-5 py-2 rounded-3xl hover:bg-white/10 flex items-center gap-2">
+          <i class="fa-solid fa-home"></i> Home
+        </button>
+        <button onclick="connectWallet()" class="px-6 py-2.5 bg-white text-black rounded-3xl font-semibold">Connect Wallet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="fixed bottom-0 left-0 right-0 bottom-nav z-50 md:hidden">
+    <div class="flex justify-around py-3 text-xs">
+      <button onclick="goToSection('home')" class="flex flex-col items-center"><i class="fa-solid fa-home text-xl"></i>Home</button>
+      <button onclick="goToSection('dashboard')" class="flex flex-col items-center"><i class="fa-solid fa-chart-line text-xl"></i>Dashboard</button>
+      <button onclick="goToSection('market')" class="flex flex-col items-center"><i class="fa-solid fa-chart-bar text-xl"></i>Market</button>
+      <button onclick="window.open('agents.html','_blank')" class="flex flex-col items-center"><i class="fa-solid fa-robot text-xl"></i>Agents</button>
+      <button onclick="window.open('lock.html','_blank')" class="flex flex-col items-center"><i class="fa-solid fa-lock text-xl"></i>Lock</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="section-home" class="section active max-w-7xl mx-auto px-6 pt-16">
+    <h1 class="text-6xl md:text-7xl font-bold tracking-tighter leading-none">Trade Without<br>Limits.</h1>
+    <p class="mt-6 text-xl text-white/70 max-w-md">AI Agents on Solana • Memecoin Snipers • Token Locker</p>
+    <div class="flex gap-4 mt-10">
+      <button onclick="goToSection('dashboard')" class="px-8 py-4 bg-white text-black rounded-3xl font-semibold text-lg">Open Dashboard</button>
+      <button onclick="goToSection('market')" class="px-8 py-4 border border-white/30 rounded-3xl text-lg">Live Market</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="section-dashboard" class="section max-w-7xl mx-auto px-6 pt-8">
+    <h2 class="text-4xl font-semibold">Dashboard</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+      <!-- Cards here (same as before) -->
+    </div>
+    <div class="mt-8 grid md:grid-cols-2 gap-6">
+      <button onclick="window.open('agents.html','_blank')" class="saturn-card p-8 rounded-3xl text-center text-xl font-medium">🚀 Manage AI Agents</button>
+      <button onclick="window.open('lock.html','_blank')" class="saturn-card p-8 rounded-3xl text-center text-xl font-medium">🔒 Token Locker</button>
+    </div>
+  </div>
+
+  <!-- LIVE MARKET -->
+  <div id="section-market" class="section max-w-7xl mx-auto px-6 pt-8">
+    <h2 class="text-4xl font-semibold">Live Market</h2>
+    <!-- Chart and list will populate via JS -->
+    <div id="marketList" class="mt-6"></div>
+  </div>
+
+  <script>
+    // Dev Mode (5 clicks on logo)
+    let clicks = 0;
+    function handleLogoClick() {
+      clicks++;
+      if (clicks >= 5) {
+        if (prompt("Dev code?") === "boss2026") {
+          sessionStorage.setItem("saturn_dev", "true");
+          alert("✅ Dev Mode ON - Free testing enabled");
+        }
+        clicks = 0;
+      }
     }
 
-    .glass {
-      background: rgba(16, 16, 34, 0.85);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(124, 58, 237, 0.1);
+    function goToSection(s) {
+      document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+      document.getElementById('section-'+s).classList.add('active');
     }
 
-    .section {
-      display: none;
+    function goToHome() { goToSection('home'); }
+
+    function connectWallet() {
+      alert("Phantom connect (demo) - In real version this connects your wallet");
     }
-    
-    .section.active {
-      display: block;
+
+    // Simple live market demo
+    const tokens = ["SOL", "BONK", "JUP", "WIF"];
+    function initMarket() {
+      const list = document.getElementById('marketList');
+      list.innerHTML = tokens.map(t => `
+        <div class="saturn-card p-4 rounded-3xl mb-3 flex justify-between items-center cursor-pointer" onclick="alert('Chart for ${t} - coming live!')">
+          <span class="font-bold">${t}</span>
+          <span class="text-emerald-400">Live Price • +2.4%</span>
+        </div>
+      `).join('');
     }
+
+    window.onload = () => {
+      initMarket();
+      console.log("%cSaturn Variant 1 Fixed Loaded", "color:#a855f7;font-size:14px");
+    };
+  </script>
+</body>
+</html>    }
 
     .nav-active {
       color: #7c3aed;
