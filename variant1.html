@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saturn • AI Solana Trading</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --primary: #7c3aed;
+    }
+    
+    body {
+      font-family: 'Outfit', system_ui, sans-serif;
+    }
+    
+    .font-mono {
+      font-family: 'Space Grotesk', ui-monospace, monospace;
+    }
+
+    .glass {
+      background: rgba(16, 16, 34, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(124, 58, 237, 0.1);
+    }
+
+    .section {
+      display: none;
+    }
+    
+    .section.active {
+      display: block;
+    }
+
+    .nav-active {
+      color: #7c3aed;
+      border-bottom: 2px solid #7c3aed;
+    }
+
+    .metric-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .purple-gradient {
+      background: linear-gradient(135deg, #7c3aed, #9d5cf7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .saturn-card {
+      background: #101022;
+      border: 1px solid #1c1c38;
+      transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+
+    .saturn-card:hover {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.2);
+    }
+
+    .bottom-nav {
+      background: rgba(16, 16, 34, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid #1c1c38;
+    }
+
+    .live-dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .chart-container {
+      position: relative;
+    }
+  </style>
+</head>
+<body class="bg-[#04040b] text-white">
+  <!-- Top Bar -->
+  <div class="sticky top-0 z-50 glass border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <!-- Logo with Dev Mode -->
+        <div onclick="handleLogoClick()" class="flex items-center gap-x-3 cursor-pointer">
+          <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center">
+            <i class="fa-solid fa-rocket text-white text-2xl"></i>
+          </div>
+          <div>
+            <span class="font-semibold text-2xl tracking-tighter">SATURN</span>
+            <span class="text-xs px-1.5 py-0.5 rounded bg-white/10 text-white/60 align-super">v1.2p</span>
+          </div>
+        </div>
+        
+        <div id="devBadge" class="hidden items-center gap-x-1.5 px-3 py-1 rounded-3xl bg-red-500/10 text-red-400 text-xs font-medium">
+          <div class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+          <span>DEV MODE</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-x-4">
+        <!-- Balance -->
+        <div class="hidden md:flex items-center gap-x-2 px-4 py-2 rounded-3xl bg-white/5 text-sm">
+          <i class="fa-solid fa-wallet text-violet-400"></i>
+          <span id="navBal" class="font-mono">0.00 SOL</span>
+        </div>
+
+        <!-- Home Button -->
+        <button onclick="goToHome()" 
+                class="flex items-center gap-x-2 px-4 py-2 rounded-3xl bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium">
+          <i class="fa-solid fa-home"></i>
+          <span class="hidden md:inline">Home</span>
+        </button>
+
+        <!-- Connect Wallet -->
+        <button onclick="connectWallet()" 
+                class="px-5 py-2.5 rounded-3xl bg-white text-black font-semibold text-sm flex items-center gap-x-2 hover:bg-white/90 transition-all active:scale-[0.985]">
+          <i class="fa-solid fa-plug"></i>
+          <span id="connectBtnText">Connect</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bottom-nav md:hidden">
+    <div class="max-w-7xl mx-auto px-2">
+      <div class="flex justify-around py-2">
+        <button onclick="goToSection('home')" class="nav-btn flex flex-col items-center px-4 py-1 text-xs">
+          <i class="fa-solid fa-home text-lg mb-0.5"></i>
+          <span>Home</span>
+        </button>
+        <button onclick="goToSection('dashboard')" class="nav-btn flex flex-col items-center px-4 py-1 text-xs">
+          <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+          <span>Dashboard</span>
+        </button>
+        <button onclick="goToSection('market')" class="nav-btn flex flex-col items-center px-4 py-1 text-xs">
+          <i class="fa-solid fa-chart-bar text-lg mb-0.5"></i>
+          <span>Market</span>
+        </button>
+        <button onclick="window.open('agents.html', '_blank')" class="nav-btn flex flex-col items-center px-4 py-1 text-xs">
+          <i class="fa-solid fa-robot text-lg mb-0.5"></i>
+          <span>Agents</span>
+        </button>
+        <button onclick="window.open('lock.html', '_blank')" class="nav-btn flex flex-col items-center px-4 py-1 text-xs">
+          <i class="fa-solid fa-lock text-lg mb-0.5"></i>
+          <span>Lock</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME / HERO -->
+  <div id="section-home" class="section active max-w-7xl mx-auto px-6 pt-12 pb-20">
+    <div class="max-w-3xl">
+      <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-white/5 text-sm mb-6">
+        <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+        <span class="font-medium">Live on Solana • Non-custodial</span>
+      </div>
+      
+      <h1 class="text-7xl md:text-7xl font-semibold tracking-tighter leading-none">
+        Trade Without<br>Limits.
+      </h1>
+      <p class="mt-6 max-w-md text-xl text-white/70">
+        Deploy autonomous AI agents that snipe pump.fun launches, filter rugs, and execute smart strategies 24/7.
+      </p>
+
+      <div class="flex flex-wrap gap-3 mt-8">
+        <button onclick="goToSection('dashboard')" 
+                class="px-8 py-4 rounded-3xl bg-white text-black font-semibold flex items-center gap-x-3 hover:bg-white/90 transition-all text-lg active:scale-[0.985]">
+          Open Dashboard
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        
+        <button onclick="goToSection('market')" 
+                class="px-8 py-4 rounded-3xl border border-white/20 hover:bg-white/5 transition-all text-lg flex items-center gap-x-3">
+          View Live Market
+        </button>
+      </div>
+
+      <div class="mt-8 flex items-center gap-x-8 text-sm">
+        <div class="flex -space-x-2">
+          <div class="w-7 h-7 rounded-full bg-zinc-700 ring-2 ring-[#04040b]"></div>
+          <div class="w-7 h-7 rounded-full bg-zinc-700 ring-2 ring-[#04040b]"></div>
+          <div class="w-7 h-7 rounded-full bg-zinc-700 ring-2 ring-[#04040b]"></div>
+        </div>
+        <div class="text-white/60">Join 2.4k+ traders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="section-dashboard" class="section max-w-7xl mx-auto px-6 pt-8 pb-20">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="text-4xl font-semibold tracking-tight">Dashboard</h2>
+        <p class="text-white/60 mt-1">Your agents • Live performance</p>
+      </div>
+      <button onclick="goToHome()" class="text-sm flex items-center gap-x-2 text-white/70 hover:text-white">
+        <i class="fa-solid fa-home"></i> Back to Home
+      </button>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Portfolio Balance</div>
+        <div class="text-3xl font-semibold font-mono mt-2">12.84 <span class="text-base">SOL</span></div>
+        <div class="text-emerald-400 text-xs mt-1">+$1.2k (24h)</div>
+      </div>
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Total PnL</div>
+        <div class="text-3xl font-semibold font-mono mt-2 text-emerald-400">+47.3 SOL</div>
+        <div class="text-xs mt-1">+312% all-time</div>
+      </div>
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Active Positions</div>
+        <div class="text-3xl font-semibold font-mono mt-2">7</div>
+        <div class="text-xs mt-1 text-white/60">3 DCA • 4 Snipe</div>
+      </div>
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Win Rate</div>
+        <div class="text-3xl font-semibold font-mono mt-2">67%</div>
+        <div class="text-xs mt-1">142 / 212 trades</div>
+      </div>
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Tokens Scanned</div>
+        <div class="text-3xl font-semibold font-mono mt-2">1.2k</div>
+        <div class="text-xs mt-1">Today</div>
+      </div>
+      <div class="saturn-card rounded-3xl p-5">
+        <div class="text-white/60 text-sm">Fees Paid</div>
+        <div class="text-3xl font-semibold font-mono mt-2">4.8 SOL</div>
+        <div class="text-xs mt-1">This month</div>
+      </div>
+    </div>
+
+    <!-- Live Chart -->
+    <div class="saturn-card rounded-3xl p-6 mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <div class="font-semibold">Session PnL</div>
+          <div class="text-emerald-400 text-sm">+$8.4 SOL today</div>
+        </div>
+        <div class="text-xs px-3 py-1 bg-white/5 rounded-2xl">Live</div>
+      </div>
+      <div class="h-64">
+        <canvas id="pnlChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Quick Actions -->
+      <div class="saturn-card rounded-3xl p-6">
+        <div class="font-semibold mb-4">Quick Actions</div>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="window.open('agents.html', '_blank')" 
+                  class="flex items-center justify-center gap-x-2 px-5 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-sm font-medium">
+            <i class="fa-solid fa-robot"></i>
+            <span>Manage Agents</span>
+          </button>
+          <button onclick="window.open('lock.html', '_blank')" 
+                  class="flex items-center justify-center gap-x-2 px-5 py-3.5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all text-sm font-medium">
+            <i class="fa-solid fa-lock"></i>
+            <span>Lock Tokens</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Feed Preview -->
+      <div class="saturn-card rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div class="font-semibold">Live Feed</div>
+          <button onclick="goToSection('market')" class="text-xs text-violet-400">View all →</button>
+        </div>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between items-center"><span class="text-white/80">NEW • PUMP</span> <span class="text-emerald-400">PASS</span></div>
+          <div class="flex justify-between items-center"><span class="text-white/80">HIGH BUNDLER • 18%</span> <span class="text-red-400">SKIP</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE MARKET + CHART -->
+  <div id="section-market" class="section max-w-7xl mx-auto px-6 pt-8 pb-20">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h2 class="text-4xl font-semibold tracking-tight">Live Market</h2>
+        <p class="text-white/60">Real-time prices &amp; charts • Solana assets</p>
+      </div>
+      <button onclick="goToHome()" class="text-sm flex items-center gap-x-2 text-white/70 hover:text-white">
+        <i class="fa-solid fa-home"></i> Back to Home
+      </button>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-6">
+      <!-- Token List -->
+      <div class="lg:col-span-5 saturn-card rounded-3xl p-6">
+        <div class="font-semibold mb-4 flex items-center gap-x-2">
+          <span>Tradeable Assets</span>
+          <span class="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded">LIVE</span>
+        </div>
+        
+        <div id="marketList" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="lg:col-span-7 saturn-card rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div>
+            <div id="chartTitle" class="font-semibold text-xl">SOL / USD</div>
+            <div id="chartPrice" class="text-3xl font-mono font-semibold">$142.85</div>
+            <div id="chartChange" class="text-emerald-400 text-sm">+2.4% (24h)</div>
+          </div>
+          <div class="text-xs px-3 py-1 bg-white/5 rounded-2xl">Live • 1H</div>
+        </div>
+        
+        <div class="h-80">
+          <canvas id="liveChart"></canvas>
+        </div>
+        
+        <div class="text-[10px] text-white/50 mt-3 text-center">Data via public APIs • Updates every 15s</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tailwind script
+    function initTailwind() {
+      document.documentElement.style.setProperty('--accent', '#7c3aed');
+    }
+
+    // Dev Mode
+    let devTapCount = 0;
+    let devTapTimer = null;
+    const DEV_KEY = "saturn_dev_v12";
+
+    function handleLogoClick() {
+      devTapCount++;
+      clearTimeout(devTapTimer);
+      devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
+
+      if (devTapCount >= 5) {
+        devTapCount = 0;
+        const code = prompt("Enter dev code:");
+        if (code === "boss2026") {
+          sessionStorage.setItem(DEV_KEY, "true");
+          document.getElementById("devBadge").classList.remove("hidden");
+          document.getElementById("devBadge").classList.add("flex");
+          alert("🛸 Dev mode activated! Free deployments enabled.");
+        } else {
+          alert("Invalid code");
+        }
+      }
+    }
+
+    function isDev() {
+      return sessionStorage.getItem(DEV_KEY) === "true";
+    }
+
+    // Navigation
+    function goToSection(section) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById('section-' + section);
+      if (target) target.classList.add('active');
+      
+      // Scroll to top on mobile
+      if (window.innerWidth < 768) window.scrollTo(0, 0);
+    }
+
+    function goToHome() {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById('section-home').classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    // Wallet (simplified)
+    async function connectWallet() {
+      const btnText = document.getElementById('connectBtnText');
+      btnText.textContent = "Connecting...";
+      
+      // Simulate or use real Phantom
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const resp = await window.solana.connect();
+          btnText.textContent = resp.publicKey.toString().slice(0, 4) + "..." + resp.publicKey.toString().slice(-4);
+          document.getElementById('navBal').textContent = "12.84 SOL"; // placeholder
+        } catch (e) {
+          alert("Phantom connection failed");
+          btnText.textContent = "Connect";
+        }
+      } else {
+        alert("Phantom wallet not found. Using demo mode.");
+        btnText.textContent = "DemoWallet";
+        document.getElementById('navBal').textContent = "12.84 SOL";
+      }
+    }
+
+    // Live Market Data + Chart
+    let liveChartInstance = null;
+    let currentToken = null;
+
+    const demoTokens = [
+      { symbol: "SOL", name: "Solana", price: 142.85, change: 2.4, address: "So11111111111111111111111111111111111111112" },
+      { symbol: "BONK", name: "Bonk", price: 0.000024, change: -1.8, address: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263" },
+      { symbol: "JUP", name: "Jupiter", price: 0.78, change: 4.1, address: "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN" },
+      { symbol: "WIF", name: "dogwifhat", price: 2.15, change: 8.7, address: "EKpQGSJssnW8z4vN8v3vN8v3vN8v3vN8v3vN8v3vN8" } // placeholder
+    ];
+
+    async function updateMarketList() {
+      const container = document.getElementById('marketList');
+      container.innerHTML = '';
+
+      demoTokens.forEach(token => {
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 cursor-pointer transition-colors ${currentToken && currentToken.symbol === token.symbol ? 'bg-white/10' : ''}`;
+        div.innerHTML = `
+          <div>
+            <div class="font-semibold">${token.symbol}</div>
+            <div class="text-xs text-white/60">${token.name}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-mono">$${token.price.toFixed(token.price < 1 ? 6 : 2)}</div>
+            <div class="${token.change >= 0 ? 'text-emerald-400' : 'text-red-400'} text-xs">${token.change >= 0 ? '+' : ''}${token.change}%</div>
+          </div>
+        `;
+        div.onclick = () => loadTokenChart(token);
+        container.appendChild(div);
+      });
+    }
+
+    async function loadTokenChart(token) {
+      currentToken = token;
+      document.getElementById('chartTitle').textContent = `${token.symbol} / USD`;
+      document.getElementById('chartPrice').textContent = `$${token.price.toFixed(token.price < 1 ? 6 : 2)}`;
+      
+      const changeEl = document.getElementById('chartChange');
+      changeEl.textContent = `${token.change >= 0 ? '+' : ''}${token.change}% (24h)`;
+      changeEl.className = token.change >= 0 ? 'text-emerald-400 text-sm' : 'text-red-400 text-sm';
+
+      // Update list highlight
+      updateMarketList();
+
+      // Simple live chart (Chart.js)
+      const ctx = document.getElementById('liveChart');
+      
+      if (liveChartInstance) liveChartInstance.destroy();
+
+      // Generate sample historical data (replace with real API later)
+      const labels = [];
+      const data = [];
+      const now = Date.now();
+      for (let i = 12; i >= 0; i--) {
+        labels.push(new Date(now - i * 3600000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+        const variation = (Math.random() - 0.5) * (token.price * 0.03);
+        data.push((token.price + variation).toFixed(4));
+      }
+
+      liveChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: token.symbol,
+            data: data,
+            borderColor: '#7c3aed',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            backgroundColor: 'rgba(124, 58, 237, 0.08)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#1c1c38' }, ticks: { color: '#6b7280' } },
+            y: { grid: { color: '#1c1c38' }, ticks: { color: '#6b7280' } }
+          }
+        }
+      });
+
+      // Optional: auto-refresh price every 15s (demo)
+      console.log(`[Saturn] Loaded chart for ${token.symbol}`);
+    }
+
+    function initLiveMarket() {
+      updateMarketList();
+      
+      // Auto-load first token
+      setTimeout(() => {
+        if (demoTokens.length > 0) {
+          loadTokenChart(demoTokens[0]);
+        }
+      }, 800);
+
+      // Demo price updater (every 12 seconds)
+      setInterval(() => {
+        if (currentToken) {
+          const variation = (Math.random() - 0.5) * 0.8;
+          currentToken.price = parseFloat((currentToken.price * (1 + variation / 100)).toFixed(4));
+          // Re-render list and update price display if chart is open
+          updateMarketList();
+          if (document.getElementById('chartPrice')) {
+            document.getElementById('chartPrice').textContent = `$${currentToken.price.toFixed(currentToken.price < 1 ? 6 : 2)}
