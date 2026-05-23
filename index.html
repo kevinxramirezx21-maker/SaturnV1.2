@@ -3,36 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saturn V1.2</title>
+  <title>Saturn Protocol</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    body { background:#04040b; color:white; font-family:system-ui; }
-    .sidebar { background:rgba(16,16,34,0.95); }
-  </style>
+  <style> body { background: linear-gradient(#0a0a1f, #04040b); } </style>
 </head>
-<body class="flex h-screen">
-  <!-- Sidebar -->
-  <div class="w-64 sidebar h-full p-6 fixed">
-    <div class="text-3xl font-bold mb-12 flex items-center gap-3"><span>🪐</span>SATURN</div>
-    <nav class="space-y-2">
-      <a href="#" onclick="alert('Home')" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10">🏠 Home</a>
-      <a href="#" onclick="alert('Dashboard')" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10">📊 Dashboard</a>
-      <a href="agents.html" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10">🤖 AI Agents</a>
-      <a href="lock.html" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10">🔒 Token Lock</a>
-      <a href="#" onclick="alert('Market')" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-white/10">📈 Live Market</a>
-    </nav>
-  </div>
+<body class="text-white">
+  <div class="max-w-6xl mx-auto px-6 py-20">
+    <div class="text-center">
+      <div class="inline-flex items-center gap-2 bg-white/10 px-6 py-2 rounded-full mb-6">🪐 Saturn Protocol V1.2</div>
+      <h1 class="text-7xl font-bold tracking-tighter">The Future of Memecoin Trading</h1>
+      <p class="mt-6 text-2xl text-white/70">AI Agents + Secure Token Locker on Solana</p>
+    </div>
 
-  <div class="ml-64 flex-1 p-10 overflow-auto">
-    <h1 class="text-5xl font-bold">Welcome to Saturn Dashboard</h1>
-    <p class="text-white/60 mt-2">Pick your variant and tell me which one you like best</p>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-      <div onclick="window.open('agents.html','_blank')" class="bg-gradient-to-br from-purple-900 to-violet-900 p-8 rounded-3xl cursor-pointer hover:scale-105 transition">AI Agents</div>
-      <div onclick="window.open('lock.html','_blank')" class="bg-gradient-to-br from-rose-900 to-purple-900 p-8 rounded-3xl cursor-pointer hover:scale-105 transition">Token Locker</div>
-      <div class="bg-gradient-to-br from-cyan-900 to-blue-900 p-8 rounded-3xl cursor-pointer hover:scale-105 transition">Live Charts</div>
+    <div class="grid md:grid-cols-3 gap-8 mt-20">
+      <div onclick="window.open('agents.html','_blank')" class="bg-white/5 hover:bg-white/10 p-10 rounded-3xl cursor-pointer border border-white/10">
+        <div class="text-6xl mb-6">🤖</div>
+        <h3 class="text-3xl font-semibold">AI Trading Agents</h3>
+        <p class="mt-3 text-white/60">Mastermind, Sniper, DCA & more — fully autonomous</p>
+      </div>
+      
+      <div onclick="window.open('lock.html','_blank')" class="bg-white/5 hover:bg-white/10 p-10 rounded-3xl cursor-pointer border border-white/10">
+        <div class="text-6xl mb-6">🔒</div>
+        <h3 class="text-3xl font-semibold">Token Locker</h3>
+        <p class="mt-3 text-white/60">Secure your supply • Visible on explorers</p>
+      </div>
+      
+      <div class="bg-white/5 hover:bg-white/10 p-10 rounded-3xl cursor-pointer border border-white/10">
+        <div class="text-6xl mb-6">📈</div>
+        <h3 class="text-3xl font-semibold">Live Market + Charts</h3>
+        <p class="mt-3 text-white/60">Real-time prices and trading view</p>
+      </div>
+    </div>
+
+    <div class="text-center mt-16">
+      <button onclick="alert('Dev mode ready — use boss2026 on logo in other variants')" class="px-10 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl text-xl font-semibold">Try Dev Mode</button>
     </div>
   </div>
 </body>
+</html></body>
 </html>
