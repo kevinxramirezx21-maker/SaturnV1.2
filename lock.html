@@ -1,40 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Saturn Lock | Meme Token Locker</title>
-<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
-<script src="https://terminal.jup.ag/main-v2.js" data-preload></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<style>
-:root{--bg:#03050c;--s:#07090f;--s2:#0c0f1a;--s3:#101420;--b:#131826;--b2:#1a2236;--gold:#c9a84c;--purple:#9945FF;--green:#00d98b;--red:#ef4444;--text:#dde6f5;--m:#2a3a52;--m2:#5a7090;}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(201,168,76,0.08) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 90% 110%,rgba(153,69,255,0.05) 0%,transparent 55%);pointer-events:none;}
-body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(201,168,76,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.02) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
-header{position:sticky;top:0;z-index:300;background:rgba(3,5,12,0.95);backdrop-filter:blur(24px);border-bottom:1px solid var(--b);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;cursor:pointer;user-select:none;}
-.logo-ico{width:36px;height:36px;flex-shrink:0;}
-.logo-name{display:flex;flex-direction:column;gap:1px;}
-.logo-title{font-size:15px;font-weight:700;letter-spacing:-0.01em;line-height:1.1;}
-.logo-sub{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;font-family:'Space Mono',monospace;}
-.nav-tabs{display:flex;align-items:center;gap:2px;background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:3px;}
-.nav-tab{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;border:none;background:transparent;color:var(--m2);font-family:'Space Grotesk',sans-serif;}
-.nav-tab.active{background:var(--s3);color:var(--gold);}
-.hdr-right{display:flex;align-items:center;gap:8px;}
-.dev-badge{display:none;align-items:center;gap:6px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;color:#f87171;font-family:'Space Mono',monospace;cursor:pointer;}
-.dev-badge-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;animation:blink 1s infinite;}
-.ticker{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:5px 11px;font-size:12px;}
-.tdot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 7px rgba(201,168,76,0.7);animation:blink 2s infinite;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-.tsym{color:var(--m2);}.tprice{font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;}
-.wallet-btn{display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Space Grotesk',sans-serif;transition:all 0.2s;background:linear-gradient(135deg,#9945FF,#7c3aed);color:white;}
-.wallet-btn:hover{transform:translateY(-1px);}
-.wallet-btn.conn{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.28);color:var(--gold);box-shadow:none;}
-.wdot{width:7px;height:7px;border-radius:50%;background:var(--gold);}
-.modal-bd{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s;}
-.modal-bd.open{opacity:1;pointer-events:all;}
+<!-- In the success or info section of lock.html -->
+<div class="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-2xl text-sm">
+  <strong>Note:</strong> Current flow handles <strong>fee payment + Jupiter swap</strong> for $SATURN. 
+  Full on-chain token/liquidity locking (visible on Axiom, Dexscreener, etc.) is being upgraded. 
+  Tokens are not yet moved to a vesting/lock contract in this version.
+</div>.modal-bd.open{opacity:1;pointer-events:all;}
 .modal{background:var(--s);border:1px solid var(--b2);border-radius:20px;padding:26px;width:100%;max-width:400px;transform:translateY(14px);transition:transform 0.2s;}
 .modal-bd.open .modal{transform:none;}
 .mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
