@@ -3,27 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saturn Token Locker</title>
+  <title>Saturn • Token Locker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Jupiter Terminal -->
+  <script src="https://terminal.jup.ag/main-v3.js" data-preload></script>
 </head>
 <body class="bg-[#03050c] text-white">
 
-  <!-- BACK BUTTON -->
+  <!-- Back Button -->
   <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
     <a href="index.html" class="flex items-center gap-x-2 text-sm hover:text-violet-400 font-medium">
       <i class="fa-solid fa-arrow-left"></i> ← Back to Saturn Hub
     </a>
+    <div id="walletStatus" class="text-xs text-white/60"></div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-6 py-10">
+  <div class="max-w-5xl mx-auto px-6 py-10">
     <h1 class="text-4xl font-bold">Token Locker</h1>
-    <p class="text-white/70 mt-2">Fee payment + Jupiter swap + Simple Vesting (demo)</p>
+    <p class="text-white/70 mt-1">Pay fees + Swap with Jupiter + Create Vesting Locks</p>
 
-    <!-- Your original locker content can stay above or below -->
+    <!-- Wallet Connect -->
+    <div class="mt-8 flex items-center gap-x-4">
+      <button onclick="connectPhantom()" 
+              class="px-6 py-3 bg-white text-black rounded-3xl font-semibold flex items-center gap-x-2">
+        <i class="fa-solid fa-wallet"></i> 
+        <span id="connectBtn">Connect Phantom</span>
+      </button>
+      <div id="walletAddress" class="text-sm text-emerald-400 font-mono hidden"></div>
+    </div>
 
-    <!-- VESTING SECTION -->
-    <div class="max-w-2xl mx-auto mt-12 p-8 glass rounded-3xl border border-white/10">
+    <!-- Jupiter Swap -->
+    <div class="mt-10">
+      <h3 class="text-xl font-semibold mb-4">Swap with Jupiter (SOL → $SATURN)</h3>
+      <div id="jupiter-terminal" class="glass rounded-3xl p-4"></div>
+    </div>
+
+    <!-- Simple Vesting Lock -->
+    <div class="max-w-2xl mt-12 p-8 glass rounded-3xl border border-white/10">
       <div class="flex items-center gap-x-3 mb-2">
         <h3 class="text-2xl font-semibold">Create Simple Vesting Lock</h3>
         <span class="px-3 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-400">Demo</span>
@@ -37,7 +54,7 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm mb-1.5">Amount</label>
+            <label class="block text-sm mb-1.5">Amount to Lock</label>
             <input id="lockAmount" type="number" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm" placeholder="1000000">
           </div>
           <div>
@@ -47,7 +64,8 @@
         </div>
       </div>
 
-      <button onclick="createSimpleVestingLock()" class="mt-8 w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl font-semibold">
+      <button onclick="createSimpleVestingLock()" 
+              class="mt-8 w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl font-semibold">
         Create Vesting Lock
       </button>
 
@@ -61,33 +79,109 @@
   </div>
 
   <script>
+    // ==================== PHANTOM WALLET ====================
+    let connectedWallet = null;
+
+    async function connectPhantom() {
+      const btn = document.getElementById('connectBtn');
+      const status = document.getElementById('walletStatus');
+      const addrEl = document.getElementById('walletAddress');
+
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const resp = await window.solana.connect();
+          connectedWallet = resp.publicKey.toString();
+          
+          btn.textContent = "Connected";
+          addrEl.textContent = connectedWallet.slice(0,4) + "..." + connectedWallet.slice(-4);
+          addrEl.classList.remove('hidden');
+          status.textContent = "Phantom Connected";
+          
+          console.log("Phantom connected:", connectedWallet);
+        } catch (err) {
+          alert("Connection rejected or failed");
+        }
+      } else {
+        alert("Phantom wallet not found. Please install it from phantom.app");
+        window.open("https://phantom.app", "_blank");
+      }
+    }
+
+    // ==================== JUPITER TERMINAL ====================
+    function initJupiter() {
+      if (window.Jupiter) {
+        window.Jupiter.init({
+          displayMode: "integrated",
+          integratedTargetId: "jupiter-terminal",
+          endpoint: "https://api.mainnet-beta.solana.com",
+          defaultExplorer: "Solscan",
+          formProps: {
+            initialInputMint: "So11111111111111111111111111111111111111112", // SOL
+            initialOutputMint: "PASTE_SATURN_MINT_HERE", // ← Replace with your $SATURN mint
+          }
+        });
+      }
+    }
+
+    // ==================== VESTING LOCK ====================
     function createSimpleVestingLock() {
       const mint = document.getElementById('lockMint').value.trim();
       const amount = document.getElementById('lockAmount').value;
       const days = document.getElementById('lockDays').value || 30;
 
-      if (!mint || !amount) { alert("Enter mint and amount"); return; }
+      if (!mint || !amount) {
+        alert("Please enter Token Mint and Amount");
+        return;
+      }
 
       const isDev = sessionStorage.getItem("saturn_dev_v12") === "true";
       const result = document.getElementById('vestingResult');
 
-      const lock = { mint, amount, days, created: new Date().toISOString(), status: isDev ? "Active (Dev)" : "Recorded" };
+      const newLock = {
+        mint, amount, days,
+        created: new Date().toISOString(),
+        status: isDev ? "Active (Dev Mode)" : "Recorded (Local)"
+      };
+
       let locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
-      locks.unshift(lock);
+      locks.unshift(newLock);
       localStorage.setItem("saturn_locks", JSON.stringify(locks));
 
       result.classList.remove('hidden');
       result.innerHTML = `✅ Lock recorded!<br>Mint: ${mint} • ${amount} tokens • ${days} days`;
+
       renderMyLocks();
     }
 
     function renderMyLocks() {
-      const c = document.getElementById('myLocks');
+      const container = document.getElementById('myLocks');
       const locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
-      if (!locks.length) { c.innerHTML = "No locks yet."; return; }
-      c.innerHTML = locks.map(l => `<div class="py-2 border-b border-white/10">${l.mint.slice(0,8)}... • ${l.amount} tokens • ${l.days} days • ${l.status}</div>`).join('');
+      if (!locks.length) {
+        container.innerHTML = "No locks yet.";
+        return;
+      }
+      container.innerHTML = locks.map(l => 
+        `<div class="py-2 border-b border-white/10">${l.mint.slice(0,8)}... • ${l.amount} tokens • ${l.days} days • ${l.status}</div>`
+      ).join('');
     }
-    setTimeout(renderMyLocks, 500);
+
+    // ==================== INIT ====================
+    window.onload = () => {
+      initJupiter();
+      setTimeout(renderMyLocks, 600);
+
+      // Auto reconnect if already connected
+      if (window.solana && window.solana.isPhantom) {
+        window.solana.connect({ onlyIfTrusted: true }).then(resp => {
+          if (resp.publicKey) {
+            connectedWallet = resp.publicKey.toString();
+            document.getElementById('connectBtn').textContent = "Connected";
+            document.getElementById('walletAddress').textContent = connectedWallet.slice(0,4) + "..." + connectedWallet.slice(-4);
+            document.getElementById('walletAddress').classList.remove('hidden');
+          }
+        }).catch(() => {});
+      }
+    };
   </script>
 </body>
 </html>
