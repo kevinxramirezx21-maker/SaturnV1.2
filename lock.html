@@ -8,6 +8,8 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+
 <style>
 
 body{
@@ -48,13 +50,15 @@ body{
 </div>
 
 <div>
+
 <h1 class="text-5xl font-bold">
 Saturn Locker
 </h1>
 
 <p class="text-white/50 mt-1">
-Institutional Token Vesting Infrastructure
+Institutional Token Locking Infrastructure
 </p>
+
 </div>
 
 </div>
@@ -76,30 +80,28 @@ Back
 <div class="flex justify-between items-center mb-8">
 
 <div>
+
 <h2 class="text-3xl font-bold">
 Create Token Lock
 </h2>
 
 <p class="text-white/50 mt-2">
-Beta Streamflow-style locking engine
+Streamflow-style locking engine
 </p>
-</div>
-
-<div class="text-right">
-
-<div class="text-sm text-white/50">
-Treasury Wallet
-</div>
-
-<div class="text-xs text-violet-400 break-all max-w-[220px]">
-CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb
-</div>
 
 </div>
 
+<button
+onclick="connectWallet()"
+id="walletButton"
+class="px-5 py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 transition"
+>
+Connect Wallet
+</button>
+
 </div>
 
-<!-- TOKEN -->
+<!-- TOKEN NAME -->
 <div class="mb-5">
 
 <div class="text-sm mb-2">
@@ -123,7 +125,7 @@ Token Mint Address
 
 <input
 id="tokenMint"
-placeholder="Enter token mint..."
+placeholder="Enter SPL token mint..."
 class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 />
 
@@ -140,8 +142,8 @@ Amount To Lock
 id="tokenAmount"
 type="number"
 value="1000000"
-class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 oninput="updateFees()"
+class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 />
 
 </div>
@@ -186,9 +188,11 @@ class="bg-white/10 py-4 rounded-2xl font-semibold"
 >
 Pay In $SATURN
 <br>
+
 <span class="text-xs text-yellow-400">
-30% Discount • Beta Soon
+30% Discount • Coming Soon
 </span>
+
 </button>
 
 </div>
@@ -205,43 +209,49 @@ Fee Breakdown
 <div class="space-y-3 text-sm">
 
 <div class="flex justify-between">
+
 <div class="text-white/50">
-Platform Fee
+Platform Fee (0.25%)
 </div>
 
 <div id="platformFee">
 0 Tokens
 </div>
+
 </div>
 
 <div class="flex justify-between">
+
 <div class="text-white/50">
-Treasury SOL Fee
+SOL Fee
 </div>
 
 <div id="solFee">
 0.30 SOL
 </div>
+
 </div>
 
 <div class="flex justify-between">
+
 <div class="text-white/50">
 Treasury Wallet
 </div>
 
 <div class="text-violet-400 text-xs">
-Saturn Treasury
-</div>
-</div>
-
+CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb
 </div>
 
 </div>
 
-<!-- LOCK BUTTON -->
+</div>
+
+</div>
+
+<!-- CREATE -->
 <button
 onclick="createLock()"
-class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 py-5 rounded-2xl font-bold text-lg"
+class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 py-5 rounded-2xl font-bold text-lg hover:opacity-90 transition"
 >
 Create Lock
 </button>
@@ -251,7 +261,7 @@ Create Lock
 <!-- SIDEBAR -->
 <div class="space-y-8">
 
-<!-- STATS -->
+<!-- ANALYTICS -->
 <div class="glass rounded-3xl p-6">
 
 <div class="text-xl font-bold mb-5">
@@ -261,6 +271,7 @@ Locker Analytics
 <div class="space-y-5">
 
 <div>
+
 <div class="text-sm text-white/50">
 Total Locked
 </div>
@@ -271,9 +282,11 @@ class="text-3xl font-bold"
 >
 0
 </div>
+
 </div>
 
 <div>
+
 <div class="text-sm text-white/50">
 Active Locks
 </div>
@@ -284,9 +297,11 @@ class="text-3xl font-bold"
 >
 0
 </div>
+
 </div>
 
 <div>
+
 <div class="text-sm text-white/50">
 Treasury Revenue
 </div>
@@ -297,13 +312,14 @@ class="text-3xl font-bold"
 >
 0 SOL
 </div>
-</div>
 
 </div>
 
 </div>
 
-<!-- LOCK HISTORY -->
+</div>
+
+<!-- RECENT LOCKS -->
 <div class="glass rounded-3xl p-6">
 
 <div class="text-xl font-bold mb-5">
@@ -328,14 +344,56 @@ No locks created yet.
 
 <script>
 
+const RPC_URL =
+"https://mainnet.helius-rpc.com/?api-key=f74bfe3e-5fb9-4834-ad1f-b38a3cc28ae7";
+
 const TREASURY =
 "CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb";
 
-let locks = [];
+let provider = null;
 
 let paymentMethod = "SOL";
 
+let locks = [];
+
 let treasuryRevenue = 0;
+
+async function connectWallet(){
+
+try{
+
+if(!window.solana){
+
+alert("Please install Phantom Wallet");
+
+return;
+
+}
+
+provider = window.solana;
+
+await provider.connect();
+
+const wallet =
+provider.publicKey.toString();
+
+document.getElementById("walletButton")
+.innerText =
+wallet.slice(0,4)
++
+"..."
++
+wallet.slice(-4);
+
+}catch(err){
+
+console.error(err);
+
+alert("Wallet connection failed");
+
+}
+
+}
 
 function selectPayment(method){
 
@@ -369,17 +427,29 @@ amount * 0.0025;
 
 document.getElementById("platformFee")
 .innerText =
-fee.toLocaleString() + " Tokens";
+fee.toLocaleString()
++
+" Tokens";
 
 document.getElementById("solFee")
 .innerText =
 paymentMethod === "SOL"
 ? "0.30 SOL"
-: "0.21 SOL Equivalent (Beta)";
+: "0.21 SOL Equivalent";
 
 }
 
-function createLock(){
+async function createLock(){
+
+try{
+
+if(!provider){
+
+alert("Connect Phantom Wallet");
+
+return;
+
+}
 
 const token =
 document.getElementById("tokenName").value;
@@ -399,14 +469,58 @@ document.getElementById("lockDays").value
 
 if(!token || !mint || !amount){
 
-alert("Please complete all fields.");
+alert("Please complete all fields");
 
 return;
 
 }
 
-const fee =
-amount * 0.0025;
+const connection =
+new solanaWeb3.Connection(RPC_URL);
+
+const sender =
+provider.publicKey;
+
+const treasury =
+new solanaWeb3.PublicKey(TREASURY);
+
+const transaction =
+new solanaWeb3.Transaction().add(
+
+solanaWeb3.SystemProgram.transfer({
+
+fromPubkey: sender,
+
+toPubkey: treasury,
+
+lamports:
+0.30 *
+solanaWeb3.LAMPORTS_PER_SOL
+
+})
+
+);
+
+transaction.feePayer = sender;
+
+const latest =
+await connection.getLatestBlockhash();
+
+transaction.recentBlockhash =
+latest.blockhash;
+
+const signed =
+await provider.signTransaction(
+transaction
+);
+
+const signature =
+await connection.sendRawTransaction(
+signed.serialize()
+);
+
+await connection.confirmTransaction(
+signature);
 
 const unlockDate =
 new Date(
@@ -414,34 +528,48 @@ Date.now() + days * 86400000
 );
 
 locks.unshift({
+
 token,
 mint,
 amount,
-fee,
 days,
 unlockDate,
-paymentMethod
+signature
+
 });
 
-treasuryRevenue +=
-paymentMethod === "SOL"
-? 0.30
-: 0.21;
+treasuryRevenue += 0.30;
 
 renderLocks();
 
 updateAnalytics();
 
 alert(
-"✅ Token lock created successfully.\n\nTreasury fees routed to Saturn treasury."
+`✅ Lock Created
+
+Treasury Payment Sent
+
+TX:
+${signature}`
 );
+
+}catch(err){
+
+console.error(err);
+
+alert("Transaction failed");
+
+}
 
 }
 
 function updateAnalytics(){
 
 const total =
-locks.reduce((a,b)=>a+b.amount,0);
+locks.reduce(
+(a,b)=>a+b.amount,
+0
+);
 
 document.getElementById("totalLocked")
 .innerText =
@@ -453,7 +581,9 @@ locks.length;
 
 document.getElementById("treasuryRevenue")
 .innerText =
-treasuryRevenue.toFixed(2) + " SOL";
+treasuryRevenue.toFixed(2)
++
+" SOL";
 
 }
 
@@ -465,9 +595,11 @@ document.getElementById("lockHistory");
 if(locks.length === 0){
 
 container.innerHTML =
-`<div class="text-white/40 text-sm">
+`
+<div class="text-white/40 text-sm">
 No locks created yet.
-</div>`;
+</div>
+`;
 
 return;
 
@@ -486,7 +618,7 @@ locks.map(lock=>`
 ${lock.token}
 </div>
 
-<div class="text-xs text-white/40 mt-1 break-all">
+<div class="text-xs text-white/40 break-all mt-1">
 ${lock.mint}
 </div>
 
@@ -506,25 +638,20 @@ ${lock.days} Days
 
 </div>
 
-<div class="mt-4 text-sm text-white/50">
+<div class="mt-3 text-sm text-white/50">
 
 Unlock:
 ${lock.unlockDate.toLocaleDateString()}
 
 </div>
 
-<div class="mt-2 text-sm text-white/50">
-
-Treasury Fee:
-${lock.fee.toLocaleString()} Tokens
-
-</div>
-
-<div class="mt-2 text-sm text-emerald-400">
-
-LOCKED
-
-</div>
+<a
+href="https://solscan.io/tx/${lock.signature}"
+target="_blank"
+class="mt-3 inline-block text-emerald-400 text-sm"
+>
+View Transaction →
+</a>
 
 </div>
 
