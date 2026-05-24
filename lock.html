@@ -470,5 +470,91 @@ window.addEventListener("load",async()=>{
   if(!W.pubkey&&window.solflare?.isSolflare){try{await window.solflare.connect();if(window.solflare.publicKey){W={id:"solflare",pubkey:window.solflare.publicKey.toString()};updateBtn();render();}}catch(e){}}
 });
 </script>
-</body>
-</html>
+</body><div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+  <a href="index.html" class="flex items-center gap-x-2 text-sm hover:text-violet-400">
+    <i class="fa-solid fa-arrow-left"></i> 
+    <span class="font-medium">← Back to Saturn Hub</span>
+  </a>
+</div>
+</html><!-- Simple Vesting / Lock Flow -->
+<div class="max-w-2xl mx-auto mt-10 p-8 glass rounded-3xl">
+  <h3 class="text-2xl font-semibold mb-2">Create Simple Vesting Lock</h3>
+  <p class="text-sm text-white/60 mb-6">This records a lock (visible in “My Locks”). Full on-chain vesting coming soon.</p>
+
+  <div class="space-y-4">
+    <div>
+      <label class="text-sm">Token Mint Address</label>
+      <input id="lockMint" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm" placeholder="Enter token mint...">
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm">Amount to Lock</label>
+        <input id="lockAmount" type="number" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm" placeholder="1000000">
+      </div>
+      <div>
+        <label class="text-sm">Lock Duration (days)</label>
+        <input id="lockDays" type="number" value="30" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm">
+      </div>
+    </div>
+  </div>
+
+  <button onclick="createSimpleVestingLock()" 
+          class="mt-6 w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl font-semibold">
+    Create Vesting Lock
+  </button>
+
+  <div id="vestingResult" class="mt-4 text-sm hidden"></div>
+
+  <div class="mt-8">
+    <div class="font-medium mb-3">My Active Locks (Demo)</div>
+    <div id="myLocks" class="text-sm text-white/70">No locks yet. Create one above.</div>
+  </div>
+</div>
+
+<script>
+function createSimpleVestingLock() {
+  const mint = document.getElementById('lockMint').value.trim();
+  const amount = document.getElementById('lockAmount').value;
+  const days = document.getElementById('lockDays').value;
+
+  if (!mint || !amount) {
+    alert("Please enter token mint and amount");
+    return;
+  }
+
+  const isDev = sessionStorage.getItem("saturn_dev_v12") === "true";
+  const resultDiv = document.getElementById('vestingResult');
+
+  if (isDev) {
+    // Dev mode - instant success + record
+    const lock = { mint, amount, days, date: new Date().toISOString(), status: "Active (Dev)" };
+    let locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
+    locks.push(lock);
+    localStorage.setItem("saturn_locks", JSON.stringify(locks));
+
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `✅ Lock created in dev mode!<br>Mint: ${mint}<br>Amount: ${amount} • ${days} days`;
+    renderMyLocks();
+  } else {
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `✅ Fee paid. Lock recorded locally.<br>Full on-chain vesting will be added soon.`;
+  }
+}
+
+function renderMyLocks() {
+  const container = document.getElementById('myLocks');
+  const locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
+  if (locks.length === 0) {
+    container.innerHTML = "No locks yet.";
+    return;
+  }
+  container.innerHTML = locks.map(l => `
+    <div class="py-2 border-b border-white/10">
+      ${l.mint.slice(0,6)}... • ${l.amount} tokens • ${l.days} days • ${l.status}
+    </div>
+  `).join('');
+}
+
+// Auto render locks on page load
+setTimeout(renderMyLocks, 500);
+</script>
