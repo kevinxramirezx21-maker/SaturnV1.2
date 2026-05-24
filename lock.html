@@ -1,219 +1,540 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Saturn • Token Locker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script src="https://terminal.jup.ag/main-v3.js" data-preload></script>
-  <!-- Solana Web3.js -->
-  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Saturn Locker</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+body{
+  background:#050816;
+  color:white;
+  font-family:Inter,sans-serif;
+}
+
+.glass{
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.saturn-logo{
+  animation:spin 18s linear infinite;
+}
+
+@keyframes spin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
+</style>
+
 </head>
-<body class="bg-[#03050c] text-white">
+<body>
 
-  <!-- Back Button -->
-  <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-    <a href="index.html" class="flex items-center gap-x-2 text-sm hover:text-violet-400 font-medium">
-      <i class="fa-solid fa-arrow-left"></i> ← Back to Saturn Hub
-    </a>
-    <div id="walletStatus" class="text-xs"></div>
-  </div>
+<div class="max-w-7xl mx-auto px-6 py-8">
 
-  <div class="max-w-5xl mx-auto px-6 py-10">
-    <h1 class="text-4xl font-bold">Token Locker</h1>
-    <p class="text-white/70">Phantom + Jupiter Swap + <span class="text-emerald-400">On-Chain Vesting</span></p>
+<!-- HEADER -->
+<div class="flex justify-between items-center mb-10">
 
-    <!-- Wallet -->
-    <div class="mt-6">
-      <button onclick="connectPhantom()" class="px-6 py-3 bg-white text-black rounded-3xl font-semibold flex items-center gap-x-2">
-        <i class="fa-solid fa-wallet"></i> <span id="connectBtn">Connect Phantom</span>
-      </button>
-      <span id="walletAddress" class="ml-4 text-emerald-400 font-mono text-sm hidden"></span>
-    </div>
+<div class="flex items-center gap-4">
 
-    <!-- Jupiter Terminal -->
-    <div class="mt-10">
-      <h3 class="text-xl font-semibold mb-3">Jupiter Swap</h3>
-      <div id="jupiter-terminal" class="glass rounded-3xl p-4"></div>
-    </div>
+<div class="saturn-logo text-5xl">
+🪐
+</div>
 
-    <!-- On-Chain Vesting Lock -->
-    <div class="max-w-2xl mt-12 p-8 glass rounded-3xl border border-white/10">
-      <h3 class="text-2xl font-semibold mb-2">Create On-Chain Vesting Lock</h3>
-      <p class="text-sm text-white/60 mb-6">Sends tokens on-chain to a lock address + records it.</p>
+<div>
+<h1 class="text-5xl font-bold">
+Saturn Locker
+</h1>
 
-      <div class="space-y-4">
-        <div>
-          <label class="text-sm">Token Mint Address</label>
-          <input id="lockMint" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm" placeholder="Token mint...">
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-sm">Amount</label>
-            <input id="lockAmount" type="number" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm">
-          </div>
-          <div>
-            <label class="text-sm">Lock Duration (days)</label>
-            <input id="lockDays" type="number" value="30" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm">
-          </div>
-        </div>
-        <div>
-          <label class="text-sm">Lock Recipient Address (where tokens will be sent)</label>
-          <input id="lockRecipient" class="w-full bg-white/5 border border-white/20 rounded-2xl px-4 py-3 text-sm" 
-                 value="F36PUYop1oCsBQMyP8aHncGppiGd1xyUm8k75PtHAoN3" placeholder="Lock wallet address">
-        </div>
-      </div>
+<p class="text-white/50 mt-1">
+Institutional Token Vesting Infrastructure
+</p>
+</div>
 
-      <button onclick="createOnChainVestingLock()" 
-              class="mt-8 w-full py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-3xl font-semibold">
-        Create On-Chain Lock
-      </button>
+</div>
 
-      <div id="vestingResult" class="mt-4 p-4 rounded-2xl bg-white/5 text-sm hidden"></div>
+<a
+href="index.html"
+class="px-5 py-3 rounded-2xl glass"
+>
+Back
+</a>
 
-      <div class="mt-8">
-        <div class="font-medium mb-3">My On-Chain Locks</div>
-        <div id="myLocks" class="text-sm text-white/70">No locks yet.</div>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <script>
-    let connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
-    let walletPublicKey = null;
+<div class="grid lg:grid-cols-3 gap-8">
 
-    // Phantom Connect
-    async function connectPhantom() {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert("Phantom not found. Please install it.");
-        return;
-      }
-      try {
-        const resp = await window.solana.connect();
-        walletPublicKey = resp.publicKey;
-        document.getElementById('connectBtn').textContent = "Connected";
-        document.getElementById('walletAddress').textContent = walletPublicKey.toString().slice(0,4) + "..." + walletPublicKey.toString().slice(-4);
-        document.getElementById('walletAddress').classList.remove('hidden');
-      } catch (e) {
-        alert("Connection failed");
-      }
-    }
+<!-- LOCK PANEL -->
+<div class="lg:col-span-2 glass rounded-3xl p-8">
 
-    // Jupiter
-    function initJupiter() {
-      if (window.Jupiter) {
-        window.Jupiter.init({
-          displayMode: "integrated",
-          integratedTargetId: "jupiter-terminal",
-          endpoint: "https://api.mainnet-beta.solana.com"
-        });
-      }
-    }
+<div class="flex justify-between items-center mb-8">
 
-    // ==================== ON-CHAIN VESTING LOGIC ====================
-    async function createOnChainVestingLock() {
-      const mint = document.getElementById('lockMint').value.trim();
-      const amount = parseFloat(document.getElementById('lockAmount').value);
-      const days = parseInt(document.getElementById('lockDays').value) || 30;
-      const recipient = document.getElementById('lockRecipient').value.trim();
+<div>
+<h2 class="text-3xl font-bold">
+Create Token Lock
+</h2>
 
-      if (!mint || !amount || !recipient) {
-        alert("Please fill Mint, Amount and Recipient");
-        return;
-      }
-      if (!walletPublicKey) {
-        alert("Please connect Phantom wallet first");
-        return;
-      }
+<p class="text-white/50 mt-2">
+Beta Streamflow-style locking engine
+</p>
+</div>
 
-      const resultDiv = document.getElementById('vestingResult');
-      resultDiv.classList.remove('hidden');
-      resultDiv.innerHTML = "Creating on-chain lock transaction...";
+<div class="text-right">
 
-      try {
-        const mintPubkey = new solanaWeb3.PublicKey(mint);
-        const recipientPubkey = new solanaWeb3.PublicKey(recipient);
-        const amountLamports = Math.floor(amount * Math.pow(10, 6)); // assume 6 decimals (change if needed)
+<div class="text-sm text-white/50">
+Treasury Wallet
+</div>
 
-        // Get token account for sender
-        const senderATA = await solanaWeb3.PublicKey.findProgramAddressSync(
-          [walletPublicKey.toBuffer(), solanaWeb3.TOKEN_PROGRAM_ID.toBuffer(), mintPubkey.toBuffer()],
-          solanaWeb3.SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-        )[0];
+<div class="text-xs text-violet-400 break-all max-w-[220px]">
+CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb
+</div>
 
-        // Get or create recipient ATA
-        const recipientATA = await solanaWeb3.PublicKey.findProgramAddressSync(
-          [recipientPubkey.toBuffer(), solanaWeb3.TOKEN_PROGRAM_ID.toBuffer(), mintPubkey.toBuffer()],
-          solanaWeb3.SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-        )[0];
+</div>
 
-        const transaction = new solanaWeb3.Transaction();
+</div>
 
-        // Transfer instruction
-        const transferInstruction = solanaWeb3.Token.createTransferInstruction(
-          solanaWeb3.TOKEN_PROGRAM_ID,
-          senderATA,
-          recipientATA,
-          walletPublicKey,
-          [],
-          amountLamports
-        );
-        transaction.add(transferInstruction);
+<!-- TOKEN -->
+<div class="mb-5">
 
-        // Send transaction
-        const signature = await window.solana.signAndSendTransaction(transaction);
-        await connection.confirmTransaction(signature.signature, "confirmed");
+<div class="text-sm mb-2">
+Token Name
+</div>
 
-        // Save locally
-        const newLock = {
-          mint,
-          amount,
-          days,
-          recipient,
-          tx: signature.signature,
-          created: new Date().toISOString(),
-          status: "On-Chain Locked"
-        };
+<input
+id="tokenName"
+placeholder="SATURN"
+class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
+/>
 
-        let locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
-        locks.unshift(newLock);
-        localStorage.setItem("saturn_locks", JSON.stringify(locks));
+</div>
 
-        resultDiv.innerHTML = `
-          ✅ <strong>On-Chain Lock Created!</strong><br>
-          Tx: <a href="https://solscan.io/tx/${signature.signature}" target="_blank" class="text-violet-400">${signature.signature.slice(0,12)}...</a><br>
-          Tokens sent to lock address on-chain.
-        `;
-        renderMyLocks();
+<!-- TOKEN MINT -->
+<div class="mb-5">
 
-      } catch (err) {
-        console.error(err);
-        resultDiv.innerHTML = `❌ Error: ${err.message || "Transaction failed"}`;
-      }
-    }
+<div class="text-sm mb-2">
+Token Mint Address
+</div>
 
-    function renderMyLocks() {
-      const container = document.getElementById('myLocks');
-      const locks = JSON.parse(localStorage.getItem("saturn_locks") || "[]");
-      if (!locks.length) {
-        container.innerHTML = "No locks yet.";
-        return;
-      }
-      container.innerHTML = locks.map(l => `
-        <div class="py-2 border-b border-white/10 text-sm">
-          ${l.mint.slice(0,6)}... • ${l.amount} tokens • ${l.days} days<br>
-          <span class="text-emerald-400">${l.status}</span> 
-          ${l.tx ? `<a href="https://solscan.io/tx/${l.tx}" target="_blank" class="text-xs text-violet-400">View Tx</a>` : ''}
-        </div>
-      `).join('');
-    }
+<input
+id="tokenMint"
+placeholder="Enter token mint..."
+class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
+/>
 
-    // Init
-    window.onload = () => {
-      initJupiter();
-      setTimeout(renderMyLocks, 600);
-    };
-  </script>
+</div>
+
+<!-- TOKEN AMOUNT -->
+<div class="mb-5">
+
+<div class="text-sm mb-2">
+Amount To Lock
+</div>
+
+<input
+id="tokenAmount"
+type="number"
+value="1000000"
+class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
+oninput="updateFees()"
+/>
+
+</div>
+
+<!-- LOCK DAYS -->
+<div class="mb-5">
+
+<div class="text-sm mb-2">
+Lock Duration (Days)
+</div>
+
+<input
+id="lockDays"
+type="number"
+value="30"
+class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
+/>
+
+</div>
+
+<!-- PAYMENT -->
+<div class="mb-8">
+
+<div class="text-sm mb-4">
+Fee Payment Method
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+
+<button
+id="solPayment"
+onclick="selectPayment('SOL')"
+class="bg-violet-600 py-4 rounded-2xl font-semibold"
+>
+0.30 SOL
+</button>
+
+<button
+id="saturnPayment"
+onclick="selectPayment('SATURN')"
+class="bg-white/10 py-4 rounded-2xl font-semibold"
+>
+Pay In $SATURN
+<br>
+<span class="text-xs text-yellow-400">
+30% Discount • Beta Soon
+</span>
+</button>
+
+</div>
+
+</div>
+
+<!-- FEES -->
+<div class="glass rounded-2xl p-6 mb-8">
+
+<div class="text-xl font-bold mb-4">
+Fee Breakdown
+</div>
+
+<div class="space-y-3 text-sm">
+
+<div class="flex justify-between">
+<div class="text-white/50">
+Platform Fee
+</div>
+
+<div id="platformFee">
+0 Tokens
+</div>
+</div>
+
+<div class="flex justify-between">
+<div class="text-white/50">
+Treasury SOL Fee
+</div>
+
+<div id="solFee">
+0.30 SOL
+</div>
+</div>
+
+<div class="flex justify-between">
+<div class="text-white/50">
+Treasury Wallet
+</div>
+
+<div class="text-violet-400 text-xs">
+Saturn Treasury
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- LOCK BUTTON -->
+<button
+onclick="createLock()"
+class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 py-5 rounded-2xl font-bold text-lg"
+>
+Create Lock
+</button>
+
+</div>
+
+<!-- SIDEBAR -->
+<div class="space-y-8">
+
+<!-- STATS -->
+<div class="glass rounded-3xl p-6">
+
+<div class="text-xl font-bold mb-5">
+Locker Analytics
+</div>
+
+<div class="space-y-5">
+
+<div>
+<div class="text-sm text-white/50">
+Total Locked
+</div>
+
+<div
+id="totalLocked"
+class="text-3xl font-bold"
+>
+0
+</div>
+</div>
+
+<div>
+<div class="text-sm text-white/50">
+Active Locks
+</div>
+
+<div
+id="activeLocks"
+class="text-3xl font-bold"
+>
+0
+</div>
+</div>
+
+<div>
+<div class="text-sm text-white/50">
+Treasury Revenue
+</div>
+
+<div
+id="treasuryRevenue"
+class="text-3xl font-bold"
+>
+0 SOL
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- LOCK HISTORY -->
+<div class="glass rounded-3xl p-6">
+
+<div class="text-xl font-bold mb-5">
+Recent Locks
+</div>
+
+<div id="lockHistory">
+
+<div class="text-white/40 text-sm">
+No locks created yet.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const TREASURY =
+"CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb";
+
+let locks = [];
+
+let paymentMethod = "SOL";
+
+let treasuryRevenue = 0;
+
+function selectPayment(method){
+
+paymentMethod = method;
+
+document.getElementById("solPayment")
+.className =
+method === "SOL"
+? "bg-violet-600 py-4 rounded-2xl font-semibold"
+: "bg-white/10 py-4 rounded-2xl font-semibold";
+
+document.getElementById("saturnPayment")
+.className =
+method === "SATURN"
+? "bg-violet-600 py-4 rounded-2xl font-semibold"
+: "bg-white/10 py-4 rounded-2xl font-semibold";
+
+updateFees();
+
+}
+
+function updateFees(){
+
+const amount =
+parseFloat(
+document.getElementById("tokenAmount").value
+) || 0;
+
+const fee =
+amount * 0.0025;
+
+document.getElementById("platformFee")
+.innerText =
+fee.toLocaleString() + " Tokens";
+
+document.getElementById("solFee")
+.innerText =
+paymentMethod === "SOL"
+? "0.30 SOL"
+: "0.21 SOL Equivalent (Beta)";
+
+}
+
+function createLock(){
+
+const token =
+document.getElementById("tokenName").value;
+
+const mint =
+document.getElementById("tokenMint").value;
+
+const amount =
+parseFloat(
+document.getElementById("tokenAmount").value
+);
+
+const days =
+parseInt(
+document.getElementById("lockDays").value
+);
+
+if(!token || !mint || !amount){
+
+alert("Please complete all fields.");
+
+return;
+
+}
+
+const fee =
+amount * 0.0025;
+
+const unlockDate =
+new Date(
+Date.now() + days * 86400000
+);
+
+locks.unshift({
+token,
+mint,
+amount,
+fee,
+days,
+unlockDate,
+paymentMethod
+});
+
+treasuryRevenue +=
+paymentMethod === "SOL"
+? 0.30
+: 0.21;
+
+renderLocks();
+
+updateAnalytics();
+
+alert(
+"✅ Token lock created successfully.\n\nTreasury fees routed to Saturn treasury."
+);
+
+}
+
+function updateAnalytics(){
+
+const total =
+locks.reduce((a,b)=>a+b.amount,0);
+
+document.getElementById("totalLocked")
+.innerText =
+total.toLocaleString();
+
+document.getElementById("activeLocks")
+.innerText =
+locks.length;
+
+document.getElementById("treasuryRevenue")
+.innerText =
+treasuryRevenue.toFixed(2) + " SOL";
+
+}
+
+function renderLocks(){
+
+const container =
+document.getElementById("lockHistory");
+
+if(locks.length === 0){
+
+container.innerHTML =
+`<div class="text-white/40 text-sm">
+No locks created yet.
+</div>`;
+
+return;
+
+}
+
+container.innerHTML =
+locks.map(lock=>`
+
+<div class="bg-black/20 rounded-2xl p-4 mb-4">
+
+<div class="flex justify-between">
+
+<div>
+
+<div class="font-bold">
+${lock.token}
+</div>
+
+<div class="text-xs text-white/40 mt-1 break-all">
+${lock.mint}
+</div>
+
+</div>
+
+<div class="text-right">
+
+<div class="text-violet-400 font-bold">
+${lock.amount.toLocaleString()}
+</div>
+
+<div class="text-xs text-white/50">
+${lock.days} Days
+</div>
+
+</div>
+
+</div>
+
+<div class="mt-4 text-sm text-white/50">
+
+Unlock:
+${lock.unlockDate.toLocaleDateString()}
+
+</div>
+
+<div class="mt-2 text-sm text-white/50">
+
+Treasury Fee:
+${lock.fee.toLocaleString()} Tokens
+
+</div>
+
+<div class="mt-2 text-sm text-emerald-400">
+
+LOCKED
+
+</div>
+
+</div>
+
+`).join("");
+
+}
+
+updateFees();
+
+</script>
+
 </body>
 </html>
