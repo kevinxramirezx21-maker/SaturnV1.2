@@ -80,19 +80,19 @@ id="symbol"
 class="bg-black/30 border border-white/10 rounded-xl px-4 py-2"
 onchange="changeSymbol()"
 >
-<option value="btcusdt">BTCUSDT</option>
-<option value="ethusdt">ETHUSDT</option>
-<option value="solusdt">SOLUSDT</option>
-<option value="xrpusdt">XRPUSDT</option>
-<option value="dogeusdt">DOGEUSDT</option>
-<option value="adausdt">ADAUSDT</option>
-<option value="avaxusdt">AVAXUSDT</option>
-<option value="linkusdt">LINKUSDT</option>
+
+<option value="bitcoin">BTCUSDT</option>
+<option value="ethereum">ETHUSDT</option>
+<option value="solana">SOLUSDT</option>
+<option value="ripple">XRPUSDT</option>
+<option value="dogecoin">DOGEUSDT</option>
+<option value="cardano">ADAUSDT</option>
+
 </select>
 
 <div
 id="markPrice"
-class="text-2xl font-bold"
+class="text-2xl font-bold text-emerald-400"
 >
 Loading...
 </div>
@@ -106,7 +106,7 @@ style="height:700px;"
 
 </div>
 
-<!-- TRADING PANEL -->
+<!-- PANEL -->
 <div class="glass rounded-3xl p-6">
 
 <div class="flex justify-between mb-8">
@@ -169,7 +169,7 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
-<!-- TAKE PROFIT -->
+<!-- TP -->
 <div class="mb-4">
 
 <div class="text-sm mb-2">
@@ -185,7 +185,7 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
-<!-- STOP LOSS -->
+<!-- SL -->
 <div class="mb-6">
 
 <div class="text-sm mb-2">
@@ -201,18 +201,19 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
+<!-- BUTTONS -->
 <div class="grid grid-cols-2 gap-4">
 
 <button
 onclick="openTrade('LONG')"
-class="bg-green-500 py-4 rounded-2xl font-bold"
+class="bg-green-500 hover:bg-green-400 py-4 rounded-2xl font-bold"
 >
 LONG
 </button>
 
 <button
 onclick="openTrade('SHORT')"
-class="bg-red-500 py-4 rounded-2xl font-bold"
+class="bg-red-500 hover:bg-red-400 py-4 rounded-2xl font-bold"
 >
 SHORT
 </button>
@@ -250,7 +251,18 @@ let currentPrice = 0;
 
 let positions = [];
 
-let currentSymbol = "btcusdt";
+let currentCoin = "bitcoin";
+
+const symbolMap = {
+
+bitcoin:"BINANCE:BTCUSDT",
+ethereum:"BINANCE:ETHUSDT",
+solana:"BINANCE:SOLUSDT",
+ripple:"BINANCE:XRPUSDT",
+dogecoin:"BINANCE:DOGEUSDT",
+cardano:"BINANCE:ADAUSDT"
+
+};
 
 const leverageSlider =
 document.getElementById("leverage");
@@ -259,8 +271,10 @@ const levDisplay =
 document.getElementById("levDisplay");
 
 leverageSlider.oninput = () => {
+
 levDisplay.innerText =
 leverageSlider.value + "x";
+
 };
 
 function updateBalance(){
@@ -276,14 +290,14 @@ try{
 
 const res =
 await fetch(
-`https://api.binance.com/api/v3/ticker/price?symbol=${currentSymbol.toUpperCase()}`
+`https://api.coingecko.com/api/v3/simple/price?ids=${currentCoin}&vs_currencies=usd`
 );
 
 const data =
 await res.json();
 
 currentPrice =
-parseFloat(data.price);
+data[currentCoin].usd;
 
 document.getElementById("markPrice").innerText =
 "$" + currentPrice.toLocaleString();
@@ -294,38 +308,47 @@ updatePositions();
 
 console.error(err);
 
+document.getElementById("markPrice").innerText =
+"Price Error";
+
 }
 
 }
 
 function openTrade(side){
 
+if(currentPrice <= 0){
+
+alert("Price still loading");
+
+return;
+
+}
+
 const size =
-parseFloat(document.getElementById("size").value);
+parseFloat(
+document.getElementById("size").value
+);
 
 const lev =
 parseInt(leverageSlider.value);
 
 const tp =
-parseFloat(document.getElementById("tp").value);
+parseFloat(
+document.getElementById("tp").value
+);
 
 const sl =
-parseFloat(document.getElementById("sl").value);
-
-if(size > balance){
-
-alert("Insufficient balance");
-
-return;
-
-}
+parseFloat(
+document.getElementById("sl").value
+);
 
 const liquidation =
 side === "LONG"
 ? currentPrice - (currentPrice / lev)
 : currentPrice + (currentPrice / lev);
 
-positions.push({
+positions.unshift({
 
 id:Date.now(),
 
@@ -381,10 +404,9 @@ position.pnl = pnlPercent;
 
 if(position.pnl >= position.tp){
 
-const gain =
-position.size * (position.pnl / 100);
-
-balance += gain;
+balance +=
+position.size *
+(position.pnl / 100);
 
 closePosition(position.id);
 
@@ -392,10 +414,9 @@ closePosition(position.id);
 
 if(position.pnl <= -position.sl){
 
-const loss =
-position.size * (Math.abs(position.pnl) / 100);
-
-balance -= loss;
+balance -=
+position.size *
+(Math.abs(position.pnl) / 100);
 
 closePosition(position.id);
 
@@ -432,18 +453,35 @@ positions.find(p => p.id === id);
 
 if(!position) return;
 
-const partial =
-position.size * 0.5;
-
 const pnlValue =
-partial * (position.pnl / 100);
+(position.size * 0.5)
+*
+(position.pnl / 100);
 
 balance += pnlValue;
 
-position.size =
-position.size * 0.5;
+position.size *= 0.5;
 
 renderPositions();
+
+updateBalance();
+
+}
+
+function manualClose(id){
+
+const position =
+positions.find(p => p.id === id);
+
+if(!position) return;
+
+const pnlValue =
+position.size *
+(position.pnl / 100);
+
+balance += pnlValue;
+
+closePosition(id);
 
 updateBalance();
 
@@ -460,26 +498,6 @@ renderPositions();
 
 }
 
-function manualClose(id){
-
-const position =
-positions.find(
-p => p.id === id
-);
-
-if(!position) return;
-
-const pnlValue =
-position.size * (position.pnl / 100);
-
-balance += pnlValue;
-
-closePosition(id);
-
-updateBalance();
-
-}
-
 function renderPositions(){
 
 const container =
@@ -488,9 +506,11 @@ document.getElementById("positions");
 if(positions.length === 0){
 
 container.innerHTML =
-`<div class="text-white/40 text-sm">
+`
+<div class="text-white/40 text-sm">
 No positions open.
-</div>`;
+</div>
+`;
 
 return;
 
@@ -515,7 +535,7 @@ ${p.side}
 
 </div>
 
-<div class="text-sm text-white/50 mt-1">
+<div class="text-sm text-white/50">
 ${p.lev}x leverage
 </div>
 
@@ -541,12 +561,12 @@ ${p.pnl.toFixed(2)}%
 
 <div class="mt-3 text-sm text-white/50">
 Entry:
-$${p.entry.toFixed(2)}
+$${p.entry.toLocaleString()}
 </div>
 
 <div class="text-sm text-white/50">
 Liquidation:
-$${p.liquidation.toFixed(2)}
+$${p.liquidation.toLocaleString()}
 </div>
 
 <div class="flex gap-2 mt-4">
@@ -575,12 +595,8 @@ Close
 
 function changeSymbol(){
 
-currentSymbol =
+currentCoin =
 document.getElementById("symbol").value;
-
-const tvSymbol =
-"BINANCE:" +
-currentSymbol.toUpperCase();
 
 document.getElementById(
 "tradingview_chart"
@@ -592,7 +608,7 @@ width:"100%",
 
 height:700,
 
-symbol:tvSymbol,
+symbol:symbolMap[currentCoin],
 
 interval:"15",
 
@@ -636,7 +652,7 @@ document.body.appendChild(script);
 
 }
 
-setInterval(fetchPrice,2000);
+setInterval(fetchPrice,3000);
 
 loadTradingView();
 
