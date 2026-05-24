@@ -10,81 +10,70 @@
   <style>
     body { background: #04040b; color: white; }
     .saturn-card { transition: all .3s cubic-bezier(0.4,0,0.2,1); }
-    .saturn-card:hover { transform: translateY(-6px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4); }
+    .saturn-card:hover { transform: translateY(-6px); }
     .glass { background: rgba(16,16,34,.92); backdrop-filter: blur(20px); }
   </style>
 </head>
 <body>
 
-  <!-- Top Bar -->
   <div class="sticky top-0 z-50 glass border-b border-white/10">
     <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
       <div onclick="tryDevMode()" class="flex items-center gap-x-3 cursor-pointer">
         <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-3xl">🪐</div>
         <span class="font-bold text-3xl tracking-tighter">SATURN</span>
       </div>
-      <div class="flex items-center gap-x-4">
+      <div>
         <button onclick="window.location.href='agents.html'" class="px-5 py-2 rounded-3xl hover:bg-white/10">Agents</button>
         <button onclick="window.location.href='lock.html'" class="px-5 py-2 rounded-3xl hover:bg-white/10">Locker</button>
-        <button onclick="connectWallet()" class="px-6 py-2.5 bg-white text-black rounded-3xl font-semibold text-sm">Connect</button>
+        <button onclick="connectWallet()" class="px-6 py-2.5 bg-white text-black rounded-3xl font-semibold text-sm">Connect Wallet</button>
       </div>
     </div>
   </div>
 
   <div class="max-w-7xl mx-auto px-6 pt-14 pb-20">
-    <!-- Hero -->
     <div class="text-center">
       <h1 class="text-7xl font-bold tracking-tighter">Saturn Protocol</h1>
       <p class="mt-4 text-2xl text-white/70">AI Trading Agents • Token Locker • Live Markets</p>
     </div>
 
-    <!-- Main Feature Cards -->
     <div class="grid md:grid-cols-3 gap-8 mt-14">
-      
       <div onclick="window.location='agents.html'" class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl">
         <div class="text-6xl mb-6">🤖</div>
         <h3 class="text-3xl font-semibold">AI Trading Agents</h3>
-        <p class="mt-3 text-white/70">Mastermind, Sniper, DCA & more. Deploy autonomous bots that trade 24/7.</p>
+        <p class="mt-3 text-white/70">Mastermind, Sniper, DCA & more. Deploy autonomous bots 24/7.</p>
         <div class="mt-6 text-violet-400 font-medium">Open Agents →</div>
       </div>
 
       <div onclick="window.location='lock.html'" class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl">
         <div class="text-6xl mb-6">🔒</div>
         <h3 class="text-3xl font-semibold">Token Locker</h3>
-        <p class="mt-3 text-white/70">Pay fees + create simple vesting locks. Jupiter swap included.</p>
+        <p class="mt-3 text-white/70">Pay fees + create simple vesting locks.</p>
         <div class="mt-6 text-violet-400 font-medium">Open Locker →</div>
       </div>
 
       <div onclick="document.getElementById('markets').scrollIntoView({behavior:'smooth'})" class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl">
         <div class="text-6xl mb-6">📈</div>
         <h3 class="text-3xl font-semibold">Live Markets + Charts</h3>
-        <p class="mt-3 text-white/70">Real-time prices + TradingView technical analysis.</p>
-        <div class="mt-6 text-violet-400 font-medium">Scroll to Markets →</div>
+        <p class="mt-3 text-white/70">Real-time prices + TradingView analysis.</p>
+        <div class="mt-6 text-violet-400 font-medium">View Markets →</div>
       </div>
     </div>
 
-    <!-- Live Markets Section -->
+    <!-- Live Markets -->
     <div id="markets" class="mt-20">
       <h2 class="text-4xl font-semibold mb-8">Live Crypto Markets</h2>
-      
       <div class="grid lg:grid-cols-2 gap-8">
-        <!-- Price Table -->
         <div class="glass rounded-3xl p-6">
           <div class="flex justify-between mb-4">
-            <div class="font-semibold">Prices (CoinGecko)</div>
+            <div class="font-semibold">Live Prices</div>
             <button onclick="updatePrices()" class="text-xs px-3 py-1 bg-white/10 rounded">Refresh</button>
           </div>
           <div id="priceTable" class="space-y-3 text-sm"></div>
         </div>
 
-        <!-- TradingView Chart -->
         <div class="glass rounded-3xl p-6">
-          <div class="font-semibold mb-4">TradingView • SOL/USDC</div>
-          <!-- TradingView Widget -->
-          <div class="tradingview-widget-container">
-            <div id="tradingview_chart"></div>
-          </div>
-          <div class="text-[10px] text-white/50 mt-2">Change symbol in TradingView if needed</div>
+          <div class="font-semibold mb-4">TradingView • SOL Chart</div>
+          <div id="tradingview_chart"></div>
         </div>
       </div>
     </div>
@@ -92,79 +81,54 @@
 
   <script>
     function tryDevMode() {
-      const code = prompt("Dev code:");
+      const code = prompt("Enter dev code:");
       if (code === "boss2026") {
         sessionStorage.setItem("saturn_dev_v12", "true");
-        alert("✅ Dev Mode ON");
+        alert("✅ Dev Mode Activated");
       }
     }
+    function connectWallet() { alert("Wallet connect available in Agents & Locker pages"); }
 
-    function connectWallet() {
-      alert("Wallet connect works in Agents & Locker pages.");
-    }
-
-    // Live Prices (CoinGecko)
     async function updatePrices() {
       const container = document.getElementById('priceTable');
       container.innerHTML = 'Loading...';
-      
       try {
         const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana,bonk,jupiter,raydium&vs_currencies=usd&include_24hr_change=true');
         const data = await res.json();
-        
         let html = '';
         const coins = [
-          {id:'solana', name:'SOL'},
-          {id:'bonk', name:'BONK'},
-          {id:'jupiter', name:'JUP'},
-          {id:'raydium', name:'RAY'}
+          {id:'solana', name:'SOL'}, {id:'bonk', name:'BONK'},
+          {id:'jupiter', name:'JUP'}, {id:'raydium', name:'RAY'}
         ];
-        
         coins.forEach(c => {
           const d = data[c.id];
           if (d) {
-            const change = d.usd_24h_change || 0;
-            html += `<div class="flex justify-between items-center py-2 border-b border-white/10">
-              <span class="font-medium">${c.name}</span>
-              <span>$${d.usd.toFixed(d.usd > 1 ? 2 : 6)} 
-                <span class="${change >= 0 ? 'text-emerald-400' : 'text-red-400'}">(${change.toFixed(1)}%)</span>
-              </span>
+            const ch = d.usd_24h_change || 0;
+            html += `<div class="flex justify-between py-2 border-b border-white/10">
+              <span>${c.name}</span>
+              <span>$${d.usd.toFixed(d.usd>1?2:6)} <span class="${ch>=0?'text-emerald-400':'text-red-400'}">(${ch.toFixed(1)}%)</span></span>
             </div>`;
           }
         });
         container.innerHTML = html;
-      } catch(e) {
-        container.innerHTML = 'Failed to load prices (rate limit or network)';
-      }
+      } catch(e){ container.innerHTML = 'Failed to load prices'; }
     }
 
-    // TradingView Widget
     function loadTradingView() {
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        "width": "100%",
-        "height": 420,
-        "symbol": "BINANCE:SOLUSDT",
-        "interval": "60",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#0a0a1f",
-        "enable_publishing": false,
-        "hide_top_toolbar": false,
-        "hide_legend": false,
-        "save_image": false,
-        "studies": ["MASimple@tv-basicstudies"]
+      const s = document.createElement('script');
+      s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      s.innerHTML = JSON.stringify({
+        "width":"100%","height":420,"symbol":"BINANCE:SOLUSDT","interval":"60",
+        "theme":"dark","style":"1","locale":"en","toolbar_bg":"#0a0a1f",
+        "enable_publishing":false,"hide_top_toolbar":false,"studies":["MASimple@tv-basicstudies"]
       });
-      document.getElementById('tradingview_chart').appendChild(script);
+      document.getElementById('tradingview_chart').appendChild(s);
     }
 
     window.onload = () => {
       updatePrices();
       loadTradingView();
-      setInterval(updatePrices, 30000); // refresh every 30s
+      setInterval(updatePrices, 30000);
     };
   </script>
 </body>
