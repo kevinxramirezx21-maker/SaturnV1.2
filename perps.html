@@ -14,7 +14,6 @@ body{
   background:#050816;
   color:white;
   font-family:Inter,sans-serif;
-  overflow-x:hidden;
 }
 
 .glass{
@@ -44,12 +43,8 @@ body{
 
 <div class="flex items-center gap-4">
 
-<div class="relative">
-
 <div class="saturn-logo text-5xl">
 🪐
-</div>
-
 </div>
 
 <div>
@@ -80,32 +75,26 @@ Back
 
 <div class="flex justify-between items-center mb-4">
 
-<div>
-
 <select
 id="symbol"
 class="bg-black/30 border border-white/10 rounded-xl px-4 py-2"
 onchange="changeSymbol()"
 >
-<option value="BINANCE:BTCUSDT">BTCUSDT</option>
-<option value="BINANCE:ETHUSDT">ETHUSDT</option>
-<option value="BINANCE:SOLUSDT">SOLUSDT</option>
-<option value="BINANCE:XRPUSDT">XRPUSDT</option>
-<option value="BINANCE:BNBUSDT">BNBUSDT</option>
-<option value="BINANCE:DOGEUSDT">DOGEUSDT</option>
-<option value="BINANCE:ADAUSDT">ADAUSDT</option>
-<option value="BINANCE:AVAXUSDT">AVAXUSDT</option>
-<option value="BINANCE:LINKUSDT">LINKUSDT</option>
-<option value="BINANCE:SUIUSDT">SUIUSDT</option>
+<option value="btcusdt">BTCUSDT</option>
+<option value="ethusdt">ETHUSDT</option>
+<option value="solusdt">SOLUSDT</option>
+<option value="xrpusdt">XRPUSDT</option>
+<option value="dogeusdt">DOGEUSDT</option>
+<option value="adausdt">ADAUSDT</option>
+<option value="avaxusdt">AVAXUSDT</option>
+<option value="linkusdt">LINKUSDT</option>
 </select>
-
-</div>
 
 <div
 id="markPrice"
 class="text-2xl font-bold"
 >
-$0
+Loading...
 </div>
 
 </div>
@@ -180,7 +169,7 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
-<!-- TP -->
+<!-- TAKE PROFIT -->
 <div class="mb-4">
 
 <div class="text-sm mb-2">
@@ -196,7 +185,7 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
-<!-- SL -->
+<!-- STOP LOSS -->
 <div class="mb-6">
 
 <div class="text-sm mb-2">
@@ -212,7 +201,6 @@ class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
 
 </div>
 
-<!-- BUTTONS -->
 <div class="grid grid-cols-2 gap-4">
 
 <button
@@ -258,9 +246,11 @@ No positions open.
 
 let balance = 100000;
 
-let currentPrice = 100000;
+let currentPrice = 0;
 
 let positions = [];
+
+let currentSymbol = "btcusdt";
 
 const leverageSlider =
 document.getElementById("leverage");
@@ -274,25 +264,37 @@ leverageSlider.value + "x";
 };
 
 function updateBalance(){
+
 document.getElementById("balance").innerText =
 "$" + balance.toFixed(2);
+
 }
 
-function simulatePrice(){
+async function fetchPrice(){
 
-const move =
-(Math.random() - 0.5) * 500;
+try{
 
-currentPrice += move;
+const res =
+await fetch(
+`https://api.binance.com/api/v3/ticker/price?symbol=${currentSymbol.toUpperCase()}`
+);
 
-if(currentPrice < 1000){
-currentPrice = 1000;
-}
+const data =
+await res.json();
+
+currentPrice =
+parseFloat(data.price);
 
 document.getElementById("markPrice").innerText =
-"$" + currentPrice.toFixed(2);
+"$" + currentPrice.toLocaleString();
 
 updatePositions();
+
+}catch(err){
+
+console.error(err);
+
+}
 
 }
 
@@ -324,15 +326,25 @@ side === "LONG"
 : currentPrice + (currentPrice / lev);
 
 positions.push({
+
 id:Date.now(),
+
 side,
+
 entry:currentPrice,
+
 size,
+
 lev,
+
 tp,
+
 sl,
+
 liquidation,
+
 pnl:0
+
 });
 
 renderPositions();
@@ -369,8 +381,10 @@ position.pnl = pnlPercent;
 
 if(position.pnl >= position.tp){
 
-balance +=
-(position.size * (position.pnl / 100));
+const gain =
+position.size * (position.pnl / 100);
+
+balance += gain;
 
 closePosition(position.id);
 
@@ -378,8 +392,10 @@ closePosition(position.id);
 
 if(position.pnl <= -position.sl){
 
-balance -=
-(position.size * (Math.abs(position.pnl) / 100));
+const loss =
+position.size * (Math.abs(position.pnl) / 100);
+
+balance -= loss;
 
 closePosition(position.id);
 
@@ -409,10 +425,36 @@ updateBalance();
 
 }
 
+function partialClose(id){
+
+const position =
+positions.find(p => p.id === id);
+
+if(!position) return;
+
+const partial =
+position.size * 0.5;
+
+const pnlValue =
+partial * (position.pnl / 100);
+
+balance += pnlValue;
+
+position.size =
+position.size * 0.5;
+
+renderPositions();
+
+updateBalance();
+
+}
+
 function closePosition(id){
 
 positions =
-positions.filter(p => p.id !== id);
+positions.filter(
+p => p.id !== id
+);
 
 renderPositions();
 
@@ -421,12 +463,16 @@ renderPositions();
 function manualClose(id){
 
 const position =
-positions.find(p => p.id === id);
+positions.find(
+p => p.id === id
+);
 
 if(!position) return;
 
-balance +=
-(position.size * (position.pnl / 100));
+const pnlValue =
+position.size * (position.pnl / 100);
+
+balance += pnlValue;
 
 closePosition(id);
 
@@ -478,7 +524,7 @@ ${p.lev}x leverage
 <div class="text-right">
 
 <div>
-$${p.size}
+$${p.size.toFixed(2)}
 </div>
 
 <div class="${
@@ -494,25 +540,32 @@ ${p.pnl.toFixed(2)}%
 </div>
 
 <div class="mt-3 text-sm text-white/50">
-
 Entry:
 $${p.entry.toFixed(2)}
-
 </div>
 
 <div class="text-sm text-white/50">
-
 Liquidation:
 $${p.liquidation.toFixed(2)}
-
 </div>
+
+<div class="flex gap-2 mt-4">
+
+<button
+onclick="partialClose(${p.id})"
+class="flex-1 bg-yellow-500/20 hover:bg-yellow-500/30 py-2 rounded-xl"
+>
+Partial Close
+</button>
 
 <button
 onclick="manualClose(${p.id})"
-class="mt-4 w-full bg-white/10 hover:bg-white/20 py-2 rounded-xl"
+class="flex-1 bg-white/10 hover:bg-white/20 py-2 rounded-xl"
 >
-Close Position
+Close
 </button>
+
+</div>
 
 </div>
 
@@ -522,28 +575,46 @@ Close Position
 
 function changeSymbol(){
 
-const symbol =
+currentSymbol =
 document.getElementById("symbol").value;
 
-document.getElementById("tradingview_chart").innerHTML =
-"";
+const tvSymbol =
+"BINANCE:" +
+currentSymbol.toUpperCase();
+
+document.getElementById(
+"tradingview_chart"
+).innerHTML = "";
 
 new TradingView.widget({
 
 width:"100%",
+
 height:700,
-symbol:symbol,
+
+symbol:tvSymbol,
+
 interval:"15",
+
 timezone:"Etc/UTC",
+
 theme:"dark",
+
 style:"1",
+
 locale:"en",
+
 toolbar_bg:"#0a0f1f",
+
 enable_publishing:false,
+
 allow_symbol_change:true,
+
 container_id:"tradingview_chart"
 
 });
+
+fetchPrice();
 
 }
 
@@ -565,7 +636,7 @@ document.body.appendChild(script);
 
 }
 
-setInterval(simulatePrice,2000);
+setInterval(fetchPrice,2000);
 
 loadTradingView();
 
