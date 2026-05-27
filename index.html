@@ -43,6 +43,11 @@
     .market-row:last-child {
       border-bottom: none;
     }
+
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
 </head>
 
@@ -50,9 +55,13 @@
 
   <!-- NAVBAR -->
   <div class="sticky top-0 z-50 glass border-b border-white/10">
+
     <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
 
-      <div onclick="tryDevMode()" class="flex items-center gap-x-3 cursor-pointer">
+      <div
+        onclick="tryDevMode()"
+        class="flex items-center gap-x-3 cursor-pointer"
+      >
         <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-3xl">
           🪐
         </div>
@@ -63,6 +72,358 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
+
+        <button
+          onclick="window.location.href='perps.html'"
+          class="px-5 py-2 rounded-3xl hover:bg-white/10 transition"
+        >
+          Perps
+        </button>
+
+        <button
+          onclick="window.location.href='agents.html'"
+          class="px-5 py-2 rounded-3xl hover:bg-white/10 transition"
+        >
+          Agents
+        </button>
+
+        <button
+          onclick="window.location.href='markets.html'"
+          class="px-5 py-2 rounded-3xl hover:bg-white/10 transition"
+        >
+          Markets
+        </button>
+
+        <button
+          onclick="window.location.href='lock.html'"
+          class="px-5 py-2 rounded-3xl hover:bg-white/10 transition"
+        >
+          Locker
+        </button>
+
+        <button
+          id="connectWallet"
+          class="px-6 py-2.5 bg-white text-black rounded-3xl font-semibold text-sm hover:opacity-90 transition"
+        >
+          Connect Wallet
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- HERO -->
+  <div class="max-w-7xl mx-auto px-6 pt-14 pb-20">
+
+    <div class="text-center">
+
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-sm mb-6">
+        Institutional Solana Trading Infrastructure
+      </div>
+
+      <h1 class="text-6xl md:text-7xl font-bold tracking-tighter leading-tight">
+        Saturn Protocol
+      </h1>
+
+      <p class="mt-6 text-xl text-white/60 max-w-3xl mx-auto">
+        AI Trading Agents • Real-Time Markets • Token Locking • Perpetual Infrastructure
+      </p>
+
+    </div>
+
+    <!-- FEATURE CARDS -->
+    <div class="grid md:grid-cols-3 gap-8 mt-14">
+
+      <!-- AGENTS -->
+      <div
+        onclick="window.location='agents.html'"
+        class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl"
+      >
+
+        <div class="text-6xl mb-6">🤖</div>
+
+        <h3 class="text-3xl font-semibold">
+          AI Trading Agents
+        </h3>
+
+        <p class="mt-3 text-white/70">
+          Autonomous execution agents with Jupiter routing, strategy automation, and live execution tracking.
+        </p>
+
+        <div class="mt-6 text-violet-400 font-medium">
+          Open Agents →
+        </div>
+
+      </div>
+
+      <!-- LOCKER -->
+      <div
+        onclick="window.location='lock.html'"
+        class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl"
+      >
+
+        <div class="text-6xl mb-6">🔒</div>
+
+        <h3 class="text-3xl font-semibold">
+          Token Locker
+        </h3>
+
+        <p class="mt-3 text-white/70">
+          Create verifiable token locks and vesting contracts with Streamflow infrastructure.
+        </p>
+
+        <div class="mt-6 text-violet-400 font-medium">
+          Open Locker →
+        </div>
+
+      </div>
+
+      <!-- MARKETS -->
+      <div
+        onclick="window.location='markets.html'"
+        class="saturn-card cursor-pointer bg-white/5 border border-white/10 p-9 rounded-3xl"
+      >
+
+        <div class="text-6xl mb-6">📈</div>
+
+        <h3 class="text-3xl font-semibold">
+          Live Markets
+        </h3>
+
+        <p class="mt-3 text-white/70">
+          Institutional-grade crypto analytics with TradingView integrations and real-time market feeds.
+        </p>
+
+        <div class="mt-6 text-violet-400 font-medium">
+          View Markets →
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- LIVE MARKET SECTION -->
+    <div id="markets" class="mt-24">
+
+      <div class="flex justify-between items-center mb-8">
+
+        <div>
+          <h2 class="text-4xl font-semibold">
+            Live Crypto Markets
+          </h2>
+
+          <p class="text-white/50 mt-2">
+            Real-time market intelligence powered by CoinGecko
+          </p>
+        </div>
+
+        <button
+          onclick="updatePrices()"
+          class="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 transition text-sm"
+        >
+          Refresh Markets
+        </button>
+
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+
+        <!-- PRICE TABLE -->
+        <div class="glass rounded-3xl p-6">
+
+          <div class="flex justify-between mb-5">
+
+            <div class="font-semibold text-lg">
+              Top Solana Ecosystem Assets
+            </div>
+
+            <div class="text-xs text-white/40">
+              Live
+            </div>
+
+          </div>
+
+          <div id="priceTable" class="space-y-3 text-sm">
+            Loading markets...
+          </div>
+
+        </div>
+
+        <!-- TRADINGVIEW -->
+        <div class="glass rounded-3xl p-6">
+
+          <div class="font-semibold text-lg mb-5">
+            TradingView • SOL/USDT
+          </div>
+
+          <div
+            class="tradingview-widget-container"
+            style="height:420px;width:100%;"
+          >
+
+            <div
+              id="tradingview_chart"
+              style="height:100%;width:100%;"
+            ></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- PAGE FUNCTIONS -->
+  <script>
+
+    function tryDevMode() {
+
+      const code = prompt("Enter dev code:");
+
+      if (code === "boss2026") {
+
+        sessionStorage.setItem(
+          "saturn_dev_v12",
+          "true"
+        );
+
+        alert("✅ Dev Mode Activated");
+
+      }
+
+    }
+
+    async function updatePrices() {
+
+      const container =
+        document.getElementById("priceTable");
+
+      container.innerHTML =
+        "<div class='text-white/50'>Loading markets...</div>";
+
+      try {
+
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=solana,bonk,jupiter,raydium&vs_currencies=usd&include_24hr_change=true"
+        );
+
+        const data = await response.json();
+
+        const coins = [
+          { id: "solana", name: "SOL" },
+          { id: "bonk", name: "BONK" },
+          { id: "jupiter", name: "JUP" },
+          { id: "raydium", name: "RAY" }
+        ];
+
+        container.innerHTML = "";
+
+        coins.forEach((coin) => {
+
+          const d = data[coin.id];
+
+          if (!d) return;
+
+          const row =
+            document.createElement("div");
+
+          row.className =
+            "market-row flex justify-between py-3";
+
+          row.innerHTML = `
+            <div class="font-medium">
+              ${coin.name}
+            </div>
+
+            <div>
+              $${d.usd.toFixed(d.usd > 1 ? 2 : 6)}
+
+              <span class="${
+                d.usd_24h_change >= 0
+                  ? "text-emerald-400"
+                  : "text-red-400"
+              } ml-2">
+
+                (${d.usd_24h_change.toFixed(2)}%)
+
+              </span>
+            </div>
+          `;
+
+          container.appendChild(row);
+
+        });
+
+      } catch (err) {
+
+        container.innerHTML =
+          "<div class='text-red-400'>Failed to load market data.</div>";
+
+        console.error(err);
+
+      }
+
+    }
+
+    // LOAD TRADINGVIEW
+    function loadTradingView() {
+
+      const script =
+        document.createElement("script");
+
+      script.src =
+        "https://s3.tradingview.com/tv.js";
+
+      script.onload = () => {
+
+        new TradingView.widget({
+
+          width: "100%",
+          height: 420,
+          symbol: "BINANCE:SOLUSDT",
+          interval: "60",
+          timezone: "Etc/UTC",
+          theme: "dark",
+          style: "1",
+          locale: "en",
+          toolbar_bg: "#0a0a1f",
+          enable_publishing: false,
+          allow_symbol_change: true,
+          container_id: "tradingview_chart"
+
+        });
+
+      };
+
+      document.body.appendChild(script);
+
+    }
+
+    window.addEventListener("load", () => {
+
+      updatePrices();
+
+      loadTradingView();
+
+      setInterval(updatePrices, 30000);
+
+    });
+
+  </script>
+
+  <!-- SATURN DAPP FILES -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <script src="./js/saturn-config.js"></script>
+  <script src="./js/saturn-wallet.js"></script>
+  <script src="./js/saturn-fees.js"></script>
+
+</body>
+</html>      <div class="flex items-center gap-2 flex-wrap">
         <button onclick="window.location.href='perps.html'" class="px-5 py-2 rounded-3xl hover:bg-white/10 transition">
           Perps
         </button>
