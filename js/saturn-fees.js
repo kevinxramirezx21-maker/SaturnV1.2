@@ -25,7 +25,7 @@ async function sendLockFee() {
           window.SATURN_CONFIG.FEE_WALLET
         ),
 
-        lamports: 0.5 * solanaWeb3.LAMPORTS_PER_SOL
+        lamports: 0.30 * solanaWeb3.LAMPORTS_PER_SOL
 
       });
 
@@ -49,7 +49,7 @@ async function sendLockFee() {
 
     await connection.confirmTransaction(signature);
 
-    alert("✅ 0.5 SOL lock fee paid successfully.");
+    alert("✅ 0.30 SOL lock fee paid successfully.");
 
     console.log("Fee tx:", signature);
 
