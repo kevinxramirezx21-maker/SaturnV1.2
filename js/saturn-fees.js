@@ -2,36 +2,43 @@ async function sendLockFee() {
 
   try {
 
-    if (!wallet || !wallet.publicKey) {
+    if (!wallet || !walletProvider) {
 
-      alert("Please connect wallet first.");
-      return false;
+      const connectedWallet =
+        await connectWallet();
+
+      if (!connectedWallet) {
+
+        alert("Please connect your wallet first.");
+        return false;
+
+      }
 
     }
 
-    const connection = new solanaWeb3.Connection(
-      window.SATURN_CONFIG.RPC_URL,
-      "confirmed"
-    );
+    const connection =
+      new solanaWeb3.Connection(
+        window.SATURN_CONFIG.RPC_URL,
+        "confirmed"
+      );
 
-    const transaction = new solanaWeb3.Transaction();
+    const treasuryWallet =
+      new solanaWeb3.PublicKey(
+        window.SATURN_CONFIG.FEE_WALLET
+      );
 
-    const instruction =
-      solanaWeb3.SystemProgram.transfer({
+    const transaction =
+      new solanaWeb3.Transaction().add(
+        solanaWeb3.SystemProgram.transfer({
+          fromPubkey: wallet,
+          toPubkey: treasuryWallet,
+          lamports: Math.round(
+            0.3 * solanaWeb3.LAMPORTS_PER_SOL
+          )
+        })
+      );
 
-        fromPubkey: wallet.publicKey,
-
-        toPubkey: new solanaWeb3.PublicKey(
-          window.SATURN_CONFIG.FEE_WALLET
-        ),
-
-        lamports: 0.30 * solanaWeb3.LAMPORTS_PER_SOL
-
-      });
-
-    transaction.add(instruction);
-
-    transaction.feePayer = wallet.publicKey;
+    transaction.feePayer = wallet;
 
     const latestBlockhash =
       await connection.getLatestBlockhash();
@@ -39,29 +46,39 @@ async function sendLockFee() {
     transaction.recentBlockhash =
       latestBlockhash.blockhash;
 
-    const signed =
-      await wallet.signTransaction(transaction);
+    const signedTransaction =
+      await walletProvider.signTransaction(transaction);
 
     const signature =
       await connection.sendRawTransaction(
-        signed.serialize()
+        signedTransaction.serialize()
       );
 
-    await connection.confirmTransaction(signature);
+    await connection.confirmTransaction(
+      signature,
+      "confirmed"
+    );
 
-    alert("✅ 0.30 SOL lock fee paid successfully.");
+    console.log("Lock fee paid:", signature);
 
-    console.log("Fee tx:", signature);
+    alert(
+      "✅ Fee paid successfully.\n\nTransaction:\n" + signature
+    );
 
     return true;
 
-  } catch (error) {
+  }
 
-    console.error(error);
+  catch (error) {
 
-    alert("Fee payment failed.");
+    console.error("Fee payment failed:", error);
+
+    alert(
+      "Fee payment failed.\n\nPossible reasons:\n- You rejected Phantom\n- Not enough SOL\n- RPC issue\n- Wallet disconnected"
+    );
 
     return false;
 
   }
+
 }
