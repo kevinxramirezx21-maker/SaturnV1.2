@@ -1,100 +1,50 @@
 let wallet = null;
-let walletProvider = null;
 
 async function connectWallet() {
-
   try {
-
-    if (window.phantom?.solana?.isPhantom) {
-
-      walletProvider = window.phantom.solana;
-
-    }
-
-    else if (window.solflare?.isSolflare) {
-
-      walletProvider = window.solflare;
-
-    }
-
-    else if (window.backpack?.isBackpack) {
-
-      walletProvider = window.backpack;
-
-    }
-
-    else {
-
-      alert(
-        "No Solana wallet detected.\n\nInstall Phantom Wallet."
-      );
-
+    if (!window.solana || !window.solana.isPhantom) {
+      alert("Phantom wallet not found. Open this page inside Phantom browser or install Phantom extension.");
       return null;
-
     }
 
-    const response =
-      await walletProvider.connect();
-
+    const response = await window.solana.connect();
     wallet = response.publicKey;
 
-    console.log(
-      "Wallet Connected:",
-      wallet.toString()
-    );
-
-    const walletButton =
-      document.getElementById("connectWallet");
-
-    if (walletButton) {
-
-      walletButton.innerText =
-        wallet.toString().slice(0, 4)
-        +
-        "..."
-        +
-        wallet.toString().slice(-4);
-
-    }
-
-    localStorage.setItem(
-      "saturnWallet",
-      wallet.toString()
-    );
-
+    updateWalletButton();
     return wallet;
 
-  }
-
-  catch (error) {
-
-    console.error(
-      "Wallet connection failed:",
-      error
-    );
-
-    alert(
-      "Wallet connection failed."
-    );
-
+  } catch (err) {
+    console.error("Wallet connection failed:", err);
+    alert("Wallet connection failed.");
     return null;
-
   }
-
 }
 
-window.addEventListener("load", () => {
+async function autoDetectWallet() {
+  try {
+    if (!window.solana || !window.solana.isPhantom) return;
 
-  const walletButton =
-    document.getElementById("connectWallet");
+    const response = await window.solana.connect({ onlyIfTrusted: true });
 
-  if (walletButton) {
+    if (response && response.publicKey) {
+      wallet = response.publicKey;
+      updateWalletButton();
+    }
 
-    walletButton.addEventListener(
-      "click",
-      connectWallet
-    );
-
+  } catch (err) {
+    console.log("Wallet not previously trusted yet.");
   }
+}
 
-});
+function updateWalletButton() {
+  const button = document.getElementById("connectWallet");
+
+  if (!button || !wallet) return;
+
+  button.innerText =
+    wallet.toString().slice(0, 4) +
+    "..." +
+    wallet.toString().slice(-4);
+}
+
+window.addEventListener("load", autoDetectWallet);
