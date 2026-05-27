@@ -1,54 +1,86 @@
-const connection = new solanaWeb3.Connection(
-  window.SATURN_CONFIG.RPC_URL,
-  "confirmed"
-);
-
 let wallet = null;
+let walletProvider = null;
 
 async function connectWallet() {
+
   try {
 
-    if (window.phantom?.solana) {
-      wallet = window.phantom.solana;
+    if (window.phantom?.solana?.isPhantom) {
+
+      walletProvider = window.phantom.solana;
+
     }
 
     else if (window.solflare?.isSolflare) {
-      wallet = window.solflare;
+
+      walletProvider = window.solflare;
+
     }
 
     else if (window.backpack?.isBackpack) {
-      wallet = window.backpack;
+
+      walletProvider = window.backpack;
+
     }
 
     else {
-      alert("No Solana wallet detected. Install Phantom Wallet.");
-      return;
+
+      alert(
+        "No Solana wallet detected.\n\nInstall Phantom Wallet."
+      );
+
+      return null;
+
     }
 
-    const response = await wallet.connect();
+    const response =
+      await walletProvider.connect();
 
-    const publicKey = response.publicKey.toString();
+    wallet = response.publicKey;
 
-    console.log("Wallet Connected:", publicKey);
+    console.log(
+      "Wallet Connected:",
+      wallet.toString()
+    );
 
-    const walletButton = document.getElementById("connectWallet");
+    const walletButton =
+      document.getElementById("connectWallet");
 
     if (walletButton) {
+
       walletButton.innerText =
-        publicKey.slice(0, 4) +
-        "..." +
-        publicKey.slice(-4);
+        wallet.toString().slice(0, 4)
+        +
+        "..."
+        +
+        wallet.toString().slice(-4);
+
     }
 
-    localStorage.setItem("saturnWallet", publicKey);
+    localStorage.setItem(
+      "saturnWallet",
+      wallet.toString()
+    );
 
-  } catch (error) {
-
-    console.error("Wallet connection failed:", error);
-
-    alert("Wallet connection failed.");
+    return wallet;
 
   }
+
+  catch (error) {
+
+    console.error(
+      "Wallet connection failed:",
+      error
+    );
+
+    alert(
+      "Wallet connection failed."
+    );
+
+    return null;
+
+  }
+
 }
 
 window.addEventListener("load", () => {
