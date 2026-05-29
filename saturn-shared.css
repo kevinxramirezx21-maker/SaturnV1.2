@@ -1,0 +1,59 @@
+/* ================================================================
+   SATURN PROTOCOL V1.2 — SHARED STYLES
+   ================================================================ */
+
+:root{
+  --bg:#03050c;
+  --s:#07090f;
+  --s2:#0c0f1a;
+  --b:#131826;
+  --b2:#1a2236;
+  --gold:#c9a84c;
+  --purple:#9945FF;
+  --green:#00d98b;
+  --text:#dde6f5;
+  --m:#2a3a52;
+  --m2:#5a7090;
+}
+
+/* WALLET BUTTON */
+#walletBtn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  border: none; font-family: inherit; transition: all 0.2s;
+  background: linear-gradient(135deg, #9945FF, #7c3aed);
+  color: white; white-space: nowrap;
+}
+#walletBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(153,69,255,0.38); }
+#walletBtn.connected { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: #c9a84c; }
+
+/* DEV BADGE */
+#devBadge {
+  display: none; align-items: center; gap: 6px;
+  background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35);
+  border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 700;
+  color: #f87171; font-family: 'Space Mono', monospace; cursor: pointer;
+}
+#devBadge .dev-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* MODALS */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: #07090f; border: 1px solid #1a2236; border-radius: 20px;
+  padding: 26px; width: 100%; max-width: 420px;
+  transform: translateY(14px); transition: transform 0.2s;
+}
+.modal-backdrop.open .modal-box { transform: none; }
+
+/* (All the rest of the CSS you pasted earlier — fee-toggle, alerts, forms, buttons, etc.) */
+.fee-toggle, .fee-opt, .alert, .form-group, .btn-primary, .nav-row, .result-screen, .saturn-toast, .dev-banner { /* ... all your previous CSS ... */ }
+
+/* Paste the FULL saturn-shared.css content you sent me earlier here */
