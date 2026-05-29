@@ -1,677 +1,629 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Saturn Locker</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
+<title>Saturn Lock | Token Locker</title>
+<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+<script src="https://terminal.jup.ag/main-v2.js" data-preload></script>
+<link rel="stylesheet" href="saturn-shared.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
+:root{--bg:#03050c;--s:#07090f;--s2:#0c0f1a;--b:#131826;--b2:#1a2236;--gold:#c9a84c;--purple:#9945FF;--green:#00d98b;--text:#dde6f5;--m:#2a3a52;--m2:#5a7090;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(201,168,76,0.07) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 50% at 90% 110%,rgba(153,69,255,0.05) 0%,transparent 55%);pointer-events:none;}
+body::after{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(201,168,76,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.018) 1px,transparent 1px);
+  background-size:44px 44px;pointer-events:none;}
 
-body{
-  background:#050816;
-  color:white;
-  font-family:Inter,sans-serif;
+/* NAV */
+nav{position:sticky;top:0;z-index:300;background:rgba(3,5,12,0.94);backdrop-filter:blur(20px);border-bottom:1px solid var(--b);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit;cursor:pointer;user-select:none;}
+.nav-logo svg{width:34px;height:34px;flex-shrink:0;}
+.nav-brand{display:flex;flex-direction:column;gap:1px;}
+.nav-brand-name{font-size:14px;font-weight:700;letter-spacing:-0.01em;}
+.nav-brand-sub{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;font-family:'Space Mono',monospace;}
+.nav-tabs{display:flex;align-items:center;gap:2px;background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:3px;}
+.nav-tab{padding:6px 13px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;border:none;background:transparent;color:var(--m2);font-family:'Space Grotesk',sans-serif;}
+.nav-tab.active{background:#101420;color:var(--gold);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.ticker{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:5px 11px;font-size:12px;}
+.ticker-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 7px rgba(201,168,76,0.7);animation:blink 2s infinite;}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1;}
+.page.active{display:block;}
+
+/* LOCK PAGE */
+.locker-wrap{max-width:660px;margin:0 auto;padding:40px 20px 80px;}
+.banner{background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(153,69,255,0.04));border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:14px 20px;margin-bottom:30px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.banner-l{display:flex;align-items:center;gap:10px;}
+.banner-title{font-weight:700;color:var(--gold);margin-bottom:2px;font-size:13px;}
+.banner-sub{font-size:12px;color:var(--m2);}
+.banner-pill{background:rgba(201,168,76,0.13);border:1px solid rgba(201,168,76,0.28);color:var(--gold);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;white-space:nowrap;font-family:'Space Mono',monospace;}
+
+/* STEPS */
+.steps{display:flex;align-items:center;margin-bottom:32px;}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;border:2px solid var(--b2);color:var(--m);transition:all 0.3s;}
+.step-circle.active{border-color:var(--gold);color:var(--gold);}
+.step-circle.done{background:var(--gold);border-color:var(--gold);color:#03050c;}
+.step-label{font-size:9px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--m);white-space:nowrap;}
+.step-label.active{color:var(--gold);}
+.step-line{flex:1;height:1px;background:var(--b2);margin:0 7px 20px;transition:background 0.4s;}
+.step-line.done{background:var(--gold);}
+
+/* CARD */
+.card{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:32px;box-shadow:0 40px 100px rgba(0,0,0,0.55);}
+.card-step-num{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:7px;}
+.card-title{font-size:23px;font-weight:700;letter-spacing:-0.025em;margin-bottom:5px;}
+.card-sub{font-size:13px;color:var(--m2);margin-bottom:20px;line-height:1.6;}
+
+/* LOCK TYPE CARDS */
+.lock-type-grid{display:flex;flex-direction:column;gap:11px;}
+.lock-type-card{background:var(--s2);border:1.5px solid var(--b);border-radius:13px;padding:20px;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.lock-type-card:hover{border-color:var(--b2);transform:translateY(-1px);}
+.lock-type-card.selected{border-color:var(--gold);}
+.lock-type-card.selected::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at top left,rgba(201,168,76,0.05) 0%,transparent 65%);}
+.ltc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.ltc-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.14);font-size:19px;}
+.ltc-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.ltc-desc{font-size:12px;color:var(--m2);line-height:1.65;margin-bottom:12px;}
+.ltc-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.tag-label{font-size:9px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:0.07em;}
+.tag{font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px;text-transform:uppercase;}
+.tag-gold{background:rgba(201,168,76,0.09);border:1px solid rgba(201,168,76,0.22);color:var(--gold);}
+.tag-amber{background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.22);color:#fbbf24;}
+.badge-beta{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(168,85,247,0.14);border:1px solid rgba(168,85,247,0.28);color:#c084fc;}
+.radio-circle{width:19px;height:19px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+.radio-circle.checked{background:var(--gold);border-color:var(--gold);}
+.radio-circle.checked::after{content:'';width:7px;height:7px;border-radius:50%;background:#03050c;}
+
+/* RECIPIENT ROWS */
+.recipient-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+.btn-remove{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.16);color:#f87171;border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px;line-height:1;transition:all 0.15s;}
+.btn-remove:hover{background:rgba(239,68,68,0.16);}
+.btn-add-row{width:100%;background:transparent;border:1.5px dashed var(--b2);color:var(--m);border-radius:10px;padding:10px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Space Grotesk',sans-serif;transition:all 0.18s;margin-top:3px;}
+.btn-add-row:hover{border-color:var(--gold);color:var(--gold);}
+
+/* REVIEW TABLE */
+.review-table{background:#040508;border:1px solid var(--b);border-radius:11px;overflow:hidden;margin-bottom:14px;}
+.review-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--b);}
+.review-row:last-child{border-bottom:none;}
+.review-key{font-size:12px;color:var(--m2);}
+.review-val{font-size:12px;font-weight:700;font-family:'Space Mono',monospace;text-align:right;max-width:55%;word-break:break-all;}
+
+/* TX STEPS */
+.tx-step{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b);font-size:12px;}
+.tx-step:last-child{border-bottom:none;}
+.tx-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.tx-dot-pending{background:var(--m);opacity:0.25;}
+.tx-dot-active{background:var(--gold);box-shadow:0 0 7px rgba(201,168,76,0.6);animation:pulse 1s infinite;}
+.tx-dot-done{background:var(--green);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.tx-label{flex:1;color:var(--m2);}
+.tx-label.active{color:var(--text);font-weight:600;}
+.tx-label.done{color:var(--green);}
+
+/* SWAP PAGE */
+.swap-wrap{max-width:500px;margin:0 auto;padding:44px 20px 80px;}
+.swap-header{text-align:center;margin-bottom:26px;}
+.swap-title{font-size:26px;font-weight:800;letter-spacing:-0.03em;margin-bottom:7px;}
+.swap-title span{color:var(--gold);}
+.swap-sub{font-size:13px;color:var(--m2);line-height:1.6;}
+#jup-terminal{border-radius:18px;overflow:hidden;border:1px solid var(--b2);box-shadow:0 40px 100px rgba(0,0,0,0.5);}
+.why-box{margin-top:20px;background:var(--s);border:1px solid var(--b);border-radius:14px;padding:20px;}
+.why-box-title{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;font-family:'Space Mono',monospace;}
+.why-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px;}
+.why-row:last-child{margin-bottom:0;}
+.why-icon{font-size:16px;flex-shrink:0;}
+.why-text{font-size:12px;color:var(--m2);line-height:1.55;}
+.why-text strong{color:var(--text);}
+
+@media(max-width:540px){
+  nav{padding:0 14px;}
+  .card{padding:20px 16px;}
+  .locker-wrap,.swap-wrap{padding:24px 13px 60px;}
+  .nav-brand-name{font-size:12px;}
+  .ticker{display:none;}
 }
-
-.glass{
-  background:rgba(255,255,255,.04);
-  backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.08);
-}
-
-.saturn-logo{
-  animation:spin 18s linear infinite;
-  cursor:pointer;
-}
-
-@keyframes spin{
-  from{transform:rotate(0deg);}
-  to{transform:rotate(360deg);}
-}
-
-.dev-badge{
-  background:#10b981;
-  color:black;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:bold;
-}
-
-.loading{
-  opacity:.6;
-  pointer-events:none;
-}
-
 </style>
-
 </head>
-
 <body>
 
-<div class="max-w-7xl mx-auto px-6 py-8">
-
-<!-- HEADER -->
-<div class="flex justify-between items-center mb-10">
-
-<div class="flex items-center gap-4">
-
-<div
-class="saturn-logo text-5xl"
-onclick="handleLogoClick()"
->
-🪐
+<!-- SHARED MODALS (wallet + dev) -->
+<div class="modal-backdrop" id="walletModal">
+  <div class="modal-box">
+    <div class="modal-header"><div class="modal-title">Connect Wallet</div>
+    <button class="modal-close" onclick="document.getElementById('walletModal').classList.remove('open')">×</button></div>
+    <p class="modal-sub">Connect your Solana wallet to create locks.</p>
+    <div id="walletList"></div>
+  </div>
+</div>
+<div class="modal-backdrop" id="devModal">
+  <div class="modal-box dev-modal-box">
+    <div class="modal-header"><div></div><button class="modal-close" onclick="closeDevModal()">×</button></div>
+    <div class="dev-modal-icon">🛸</div>
+    <div class="dev-modal-title">Developer Access</div>
+    <div class="dev-modal-sub">Enter promo code to unlock dev mode</div>
+    <div class="dev-perks">
+      <div class="dev-perks-title">Dev Mode Perks</div>
+      <div class="dev-perk"><span>✓</span> Zero lock creation fees</div>
+      <div class="dev-perk"><span>✓</span> Zero 0.20% token fee</div>
+      <div class="dev-perk"><span>✓</span> Only pay Solana gas</div>
+    </div>
+    <input id="devCodeInput" type="password" placeholder="Enter promo code..." onkeydown="if(event.key==='Enter')submitDevCode()"/>
+    <div id="devError"></div>
+    <button class="btn-dev-submit" onclick="submitDevCode()">Unlock Dev Access 🔓</button>
+  </div>
+</div>
+<div class="modal-backdrop" id="devStatusModal">
+  <div class="modal-box dev-modal-box">
+    <div class="modal-header"><div class="modal-title" style="color:#f87171">🛸 Dev Mode</div>
+    <button class="modal-close" onclick="document.getElementById('devStatusModal').classList.remove('open')">×</button></div>
+    <div class="dev-status-grid">
+      <div class="dev-status-title">Active Overrides</div>
+      <div class="dev-status-row"><span class="dev-sk">Lock creation fee</span><span class="dev-sv free">FREE</span></div>
+      <div class="dev-status-row"><span class="dev-sk">Protocol token fee</span><span class="dev-sv free">FREE</span></div>
+      <div class="dev-status-row"><span class="dev-sk">Solana gas</span><span class="dev-sv always">Always paid</span></div>
+    </div>
+    <div class="dev-deposit-box">
+      <div class="dev-deposit-title">Protocol Fee Wallet</div>
+      <div class="dev-deposit-addr">CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb</div>
+    </div>
+    <button class="btn-deactivate" onclick="deactivateDev()">Deactivate Dev Mode</button>
+  </div>
 </div>
 
-<div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" id="saturnLogo" onclick="window.location.href='index.html'">
+    <svg viewBox="0 0 34 34" fill="none">
+      <circle cx="17" cy="17" r="15" stroke="#c9a84c" stroke-width="1.2" opacity="0.3"/>
+      <circle cx="17" cy="17" r="10" stroke="#c9a84c" stroke-width="1.8" opacity="0.7"/>
+      <ellipse cx="17" cy="17" rx="16" ry="5" stroke="#c9a84c" stroke-width="1" opacity="0.4" transform="rotate(-20 17 17)"/>
+      <circle cx="17" cy="17" r="4.5" fill="#c9a84c"/>
+      <circle cx="17" cy="17" r="2" fill="#03050c"/>
+    </svg>
+    <div class="nav-brand">
+      <span class="nav-brand-name">Saturn Lock</span>
+      <span class="nav-brand-sub">Token Locker · V1.2</span>
+    </div>
+  </div>
 
-<div class="flex items-center gap-3">
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabLock" onclick="switchPage('lock')">🔒 Lock</button>
+    <button class="nav-tab" id="tabSwap" onclick="switchPage('swap')">⚡ Swap</button>
+  </div>
 
-<h1 class="text-5xl font-bold">
-Saturn Locker
-</h1>
+  <div class="nav-right">
+    <div id="devBadge" onclick="openDevStatus()">
+      <span class="dev-dot"></span>DEV
+    </div>
+    <div class="ticker">
+      <span class="ticker-dot"></span>
+      <span style="color:var(--m2);font-size:11px;">$SATURN</span>
+      <span id="saturnPrice" style="font-weight:700;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;">$0.0050</span>
+    </div>
+    <button id="walletBtn" onclick="openWalletModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1"/><polyline points="15 3 21 9 15 15"/><line x1="21" y1="9" x2="7" y2="9"/></svg>
+      Connect Wallet
+    </button>
+  </div>
+</nav>
 
-<div
-id="devBadge"
-style="display:none;"
-class="dev-badge"
->
-DEV MODE
+<!-- LOCK PAGE -->
+<div class="page active" id="pageLock">
+  <div class="locker-wrap">
+
+    <!-- Dev banner -->
+    <div class="dev-banner" id="devBanner">
+      <span style="font-size:18px">🛸</span>
+      <div class="dev-banner-text"><strong>DEV MODE ACTIVE</strong> — All protocol fees waived. Only Solana gas applies.</div>
+    </div>
+
+    <!-- 50% banner -->
+    <div class="banner">
+      <div class="banner-l">
+        <span style="font-size:22px">🪐</span>
+        <div>
+          <div class="banner-title">Save 50% with $SATURN</div>
+          <div class="banner-sub">Pay lock fees in $SATURN · Swap on the Swap tab</div>
+        </div>
+      </div>
+      <div class="banner-pill">50% OFF WITH $SATURN</div>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="steps" id="stepBar"></div>
+
+    <!-- Dynamic card -->
+    <div class="card" id="mainCard"></div>
+  </div>
 </div>
 
+<!-- SWAP PAGE -->
+<div class="page" id="pageSwap">
+  <div class="swap-wrap">
+    <div class="swap-header">
+      <div class="swap-title">Swap SOL → <span>$SATURN</span></div>
+      <div class="swap-sub">Get $SATURN to save <strong>50%</strong> on lock fees. Powered by Jupiter — best rates on Solana.</div>
+    </div>
+    <div id="jup-terminal"></div>
+    <div class="why-box">
+      <div class="why-box-title">Why $SATURN?</div>
+      <div class="why-row"><span class="why-icon">💸</span><div class="why-text"><strong>50% off</strong> every lock creation fee</div></div>
+      <div class="why-row"><span class="why-icon">🤖</span><div class="why-text"><strong>50% off</strong> agent subscriptions on Saturn Agents</div></div>
+      <div class="why-row"><span class="why-icon">📈</span><div class="why-text"><strong>Every lock = buy pressure</strong> on $SATURN</div></div>
+      <div class="why-row"><span class="why-icon">🌐</span><div class="why-text"><a href="agents.html" style="color:var(--gold)">Browse AI Trading Agents →</a></div></div>
+    </div>
+  </div>
 </div>
 
-<p class="text-white/50 mt-1">
-Institutional Token Locking Infrastructure
-</p>
-
-</div>
-
-</div>
-
-<a
-href="index.html"
-class="px-5 py-3 rounded-2xl glass"
->
-Back
-</a>
-
-</div>
-
-<div class="grid lg:grid-cols-3 gap-8">
-
-<!-- MAIN -->
-<div class="lg:col-span-2 glass rounded-3xl p-8">
-
-<div class="flex justify-between items-center mb-8">
-
-<div>
-
-<h2 class="text-3xl font-bold">
-Create Token Lock
-</h2>
-
-<p class="text-white/50 mt-2">
-Saturn Locking Engine
-</p>
-
-</div>
-
-<button
-id="connectWallet"
-onclick="connectWallet()"
-class="px-5 py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 transition"
->
-Connect Wallet
-</button>
-
-</div>
-
-<!-- TOKEN -->
-<div class="mb-5">
-
-<div class="text-sm mb-2">
-Token Name
-</div>
-
-<input
-id="tokenName"
-placeholder="SATURN"
-class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
-/>
-
-</div>
-
-<!-- MINT -->
-<div class="mb-5">
-
-<div class="text-sm mb-2">
-Token Mint Address
-</div>
-
-<input
-id="tokenMint"
-placeholder="Enter SPL token mint..."
-class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
-/>
-
-</div>
-
-<!-- AMOUNT -->
-<div class="mb-5">
-
-<div class="text-sm mb-2">
-Amount To Lock
-</div>
-
-<input
-id="tokenAmount"
-type="number"
-value="1000000"
-oninput="updateFees()"
-class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
-/>
-
-</div>
-
-<!-- DAYS -->
-<div class="mb-5">
-
-<div class="text-sm mb-2">
-Lock Duration (Days)
-</div>
-
-<input
-id="lockDays"
-type="number"
-value="30"
-class="w-full bg-black/30 border border-white/10 rounded-2xl px-4 py-3"
-/>
-
-</div>
-
-<!-- PAYMENT -->
-<div class="mb-8">
-
-<div class="text-sm mb-4">
-Fee Payment Method
-</div>
-
-<div class="grid grid-cols-2 gap-4">
-
-<button
-id="solPayment"
-onclick="selectPayment('SOL')"
-class="bg-violet-600 py-4 rounded-2xl font-semibold"
->
-0.30 SOL
-</button>
-
-<button
-id="saturnPayment"
-onclick="selectPayment('SATURN')"
-class="bg-white/10 py-4 rounded-2xl font-semibold"
->
-Pay In $SATURN
-<br>
-
-<span class="text-xs text-yellow-400">
-30% Discount • Coming Soon
-</span>
-
-</button>
-
-</div>
-
-</div>
-
-<!-- FEES -->
-<div class="glass rounded-2xl p-6 mb-8">
-
-<div class="text-xl font-bold mb-4">
-Fee Breakdown
-</div>
-
-<div class="space-y-3 text-sm">
-
-<div class="flex justify-between">
-
-<div class="text-white/50">
-Platform Fee (0.25%)
-</div>
-
-<div id="platformFee">
-0 Tokens
-</div>
-
-</div>
-
-<div class="flex justify-between">
-
-<div class="text-white/50">
-SOL Fee
-</div>
-
-<div id="solFee">
-0.30 SOL
-</div>
-
-</div>
-
-<div class="flex justify-between">
-
-<div class="text-white/50">
-Treasury Wallet
-</div>
-
-<div class="text-violet-400 text-xs break-all">
-CqXPQf6Qe2D2KJ5UYvTLi3prAwQiSntJUXZmE3knyzFb
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- CREATE -->
-<button
-id="createLockButton"
-onclick="createLock()"
-class="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 py-5 rounded-2xl font-bold text-lg hover:opacity-90 transition"
->
-Create Lock
-</button>
-
-</div>
-
-<!-- SIDEBAR -->
-<div class="space-y-8">
-
-<!-- ANALYTICS -->
-<div class="glass rounded-3xl p-6">
-
-<div class="text-xl font-bold mb-5">
-Locker Analytics
-</div>
-
-<div class="space-y-5">
-
-<div>
-
-<div class="text-sm text-white/50">
-Total Locked
-</div>
-
-<div
-id="totalLocked"
-class="text-3xl font-bold"
->
-0
-</div>
-
-</div>
-
-<div>
-
-<div class="text-sm text-white/50">
-Active Locks
-</div>
-
-<div
-id="activeLocks"
-class="text-3xl font-bold"
->
-0
-</div>
-
-</div>
-
-<div>
-
-<div class="text-sm text-white/50">
-Treasury Revenue
-</div>
-
-<div
-id="treasuryRevenue"
-class="text-3xl font-bold"
->
-0 SOL
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- RECENT LOCKS -->
-<div class="glass rounded-3xl p-6">
-
-<div class="text-xl font-bold mb-5">
-Recent Locks
-</div>
-
-<div id="lockHistory">
-
-<div class="text-white/40 text-sm">
-No locks created yet.
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+<script src="saturn-core.js"></script>
 <script>
+// ── LOCKER STATE ──────────────────────────────────────────────────
+const STEPS = ["Type", "Config", "Recipients", "Review"];
+let LS = {
+  step: 1,
+  lockType: null,
+  tokenMint: "",
+  tokenAmount: "",
+  duration: "30",
+  durationUnit: "days",
+  unlockPrice: "",
+  recipients: [{ address: "" }],
+  feeMethod: "sol",   // "sol" | "sat"
+  txSig: null,
+  txSig2: null,
+  loading: false,
+  loadingStep: 0,
+  error: ""
+};
 
-let paymentMethod = "SOL";
+function tokenFee()  { return isDev() ? 0 : +((parseFloat(LS.tokenAmount) || 0) * SATURN.TOKEN_FEE_PC).toFixed(6); }
+function netTokens() { return +((parseFloat(LS.tokenAmount) || 0) - tokenFee()).toFixed(6); }
+function satFeeAmt() { return saturnForFee(SATURN.LOCK_SOL_FEE); }
 
-let locks = [];
+// ── RENDER ────────────────────────────────────────────────────────
+function renderPage() { renderStepBar(); renderCard(); syncDevBanner(); }
 
-let treasuryRevenue = 0;
-
-let devMode = false;
-
-let logoClicks = 0;
-
-function handleLogoClick(){
-
-logoClicks++;
-
-if(logoClicks >= 5){
-
-const password =
-prompt(
-"🪐 Dev Mode Activated\n\nEnter Password:"
-);
-
-if(password === "saturn2026"){
-
-devMode = true;
-
-document.getElementById("devBadge")
-.style.display = "inline-block";
-
-alert(
-"✅ DEV MODE ENABLED\n\nTreasury fees waived."
-);
-
-updateFees();
-
-}else{
-
-alert("Invalid password");
-
+function syncDevBanner() {
+  const b = document.getElementById("devBanner");
+  if (b) b.className = "dev-banner" + (isDev() ? " show" : "");
 }
 
-logoClicks = 0;
-
+function renderStepBar() {
+  const bar = document.getElementById("stepBar");
+  if (!bar) return;
+  bar.innerHTML = STEPS.map((s, i) => {
+    const n = i + 1, done = n < LS.step, active = n === LS.step;
+    return `<div class="step-item">
+      <div class="step-circle ${done?"done":active?"active":""}">${done ? "✓" : n}</div>
+      <div class="step-label ${active?"active":""}">${s}</div>
+    </div>${i < STEPS.length-1 ? `<div class="step-line ${done?"done":""}"></div>` : ""}`;
+  }).join("");
 }
 
+function renderCard() {
+  const card = document.getElementById("mainCard");
+  if (!card) return;
+  if (LS.step === 5) { card.innerHTML = renderSuccess(); return; }
+  if (LS.loading)    { card.innerHTML = renderLoading(); return; }
+  const fns = [null, renderStep1, renderStep2, renderStep3, renderStep4];
+  card.innerHTML = fns[Math.min(LS.step, 4)]();
 }
 
-function selectPayment(method){
-
-paymentMethod = method;
-
-document.getElementById("solPayment")
-.className =
-method === "SOL"
-? "bg-violet-600 py-4 rounded-2xl font-semibold"
-: "bg-white/10 py-4 rounded-2xl font-semibold";
-
-document.getElementById("saturnPayment")
-.className =
-method === "SATURN"
-? "bg-violet-600 py-4 rounded-2xl font-semibold"
-: "bg-white/10 py-4 rounded-2xl font-semibold";
-
-updateFees();
-
+// STEP 1
+function renderStep1() {
+  const lc = (type, icon, title, desc, tags, beta = false) => `
+    <div class="lock-type-card ${LS.lockType===type?"selected":""}" onclick="pickLock('${type}')">
+      <div class="ltc-header">
+        <div class="ltc-icon">${icon}</div>
+        <div style="display:flex;align-items:center;gap:7px;">
+          ${beta ? '<span class="badge-beta">BETA</span>' : ""}
+          <div class="radio-circle ${LS.lockType===type?"checked":""}"></div>
+        </div>
+      </div>
+      <div class="ltc-title">${title}</div>
+      <div class="ltc-desc">${desc}</div>
+      <div class="ltc-tags"><span class="tag-label">Useful for</span>${tags}</div>
+    </div>`;
+  return `
+    <div class="card-step-num">STEP 01</div>
+    <div class="card-title">Choose Lock Type</div>
+    <div class="card-sub">How do you want your tokens locked?</div>
+    <div class="lock-type-grid">
+      ${lc("time","⏱","Time-Based Lock","Lock any SPL token for a fixed period. Auto-releases to wallet when the timer ends.",
+        '<span class="tag tag-gold">💎 Diamond Hands</span><span class="tag tag-gold">LP Tokens</span>')}
+      ${lc("price","📈","Price-Based Lock","Lock until your target price is reached. We monitor feeds and release automatically.",
+        '<span class="tag tag-amber">🚀 Moonbags</span>', true)}
+    </div>
+    <div class="nav-row">
+      <div></div>
+      <button class="btn-primary" onclick="goStep(2)" ${!LS.lockType?"disabled":""}>Next Step →</button>
+    </div>`;
 }
 
-function updateFees(){
+// STEP 2
+function renderStep2() {
+  const sAmt   = satFeeAmt();
+  const dev    = isDev();
+  const solUSD = (SATURN.LOCK_SOL_FEE * SATURN.solPrice).toFixed(2);
+  const satUSD = (sAmt * SATURN.satPrice).toFixed(2);
 
-const amount =
-parseFloat(
-document.getElementById("tokenAmount").value
-) || 0;
+  const feeSection = dev
+    ? `<div class="alert alert-red">🛸 <strong>Dev Mode</strong> — Creation fee &amp; protocol token fee both waived. Only Solana gas.</div>`
+    : `<div style="font-size:10px;font-weight:700;color:var(--m2);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:8px;">Pay creation fee with</div>
+       <div class="fee-toggle">
+         <div class="fee-opt ${LS.feeMethod==="sol"?"sol":""}" onclick="setFeeMethod('sol')">
+           <div class="fee-opt-hd"><span class="fee-opt-icon">◎</span><div class="fee-radio"></div></div>
+           <div class="fee-opt-title">Pay with SOL</div>
+           <div class="fee-opt-amt sol-color">${SATURN.LOCK_SOL_FEE} SOL</div>
+           <div class="fee-opt-sub">≈ $${solUSD}</div>
+         </div>
+         <div class="fee-opt ${LS.feeMethod==="sat"?"sat":""}" onclick="setFeeMethod('sat')" style="position:relative;">
+           <div class="save-pill">SAVE 50%</div>
+           <div class="fee-opt-hd"><span class="fee-opt-icon">🪐</span><div class="fee-radio"></div></div>
+           <div class="fee-opt-title">Pay with $SATURN</div>
+           <div class="fee-opt-amt sat-color">${sAmt.toLocaleString()} SATURN</div>
+           <div class="fee-opt-sub">≈ $${satUSD} · <a href="#" onclick="switchPage('swap');return false;" style="color:var(--gold)">Get $SATURN ↗</a></div>
+         </div>
+       </div>`;
 
-const fee =
-amount * 0.0025;
-
-document.getElementById("platformFee")
-.innerText =
-fee.toLocaleString()
-+
-" Tokens";
-
-document.getElementById("solFee")
-.innerText =
-devMode
-? "DEV MODE ACTIVE"
-: paymentMethod === "SOL"
-? "0.30 SOL"
-: "0.21 SOL Equivalent";
-
+  return `
+    <div class="card-step-num">STEP 02</div>
+    <div class="card-title">Configuration</div>
+    <div class="card-sub">Set your token and lock parameters.</div>
+    <div class="form-group">
+      <label class="form-label">Token Mint Address</label>
+      <input class="form-input" placeholder="SPL token mint address..." value="${LS.tokenMint}" oninput="LS.tokenMint=this.value"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount to Lock</label>
+      <input class="form-input" type="number" min="0" placeholder="0.00" value="${LS.tokenAmount}" oninput="LS.tokenAmount=this.value;updateFeeSummary()"/>
+    </div>
+    ${LS.lockType === "time" ? `
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <input class="form-input" type="number" min="1" value="${LS.duration}" oninput="LS.duration=this.value"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unit</label>
+        <select class="form-input" onchange="LS.durationUnit=this.value">
+          <option value="days"   ${LS.durationUnit==="days"?"selected":""}>Days</option>
+          <option value="weeks"  ${LS.durationUnit==="weeks"?"selected":""}>Weeks</option>
+          <option value="months" ${LS.durationUnit==="months"?"selected":""}>Months</option>
+          <option value="years"  ${LS.durationUnit==="years"?"selected":""}>Years</option>
+        </select>
+      </div>
+    </div>` : `
+    <div class="form-group">
+      <label class="form-label">Unlock Price (USD)</label>
+      <input class="form-input" type="number" step="0.0001" placeholder="e.g. 0.0050" value="${LS.unlockPrice}" oninput="LS.unlockPrice=this.value"/>
+      <div style="font-size:11px;color:var(--m2);margin-top:5px;">Tokens release automatically when this price is reached.</div>
+    </div>`}
+    ${feeSection}
+    <div class="fee-summary">
+      <div class="fee-summary-title">📋 Fee Breakdown</div>
+      <div class="fee-line">
+        <span class="fee-key">Creation fee</span>
+        <span class="fee-val ${dev?"free":LS.feeMethod==="sat"?"gold":"purple"}">
+          ${dev ? "FREE (dev mode)" : LS.feeMethod==="sol" ? SATURN.LOCK_SOL_FEE+" SOL" : sAmt.toLocaleString()+" $SATURN"}
+        </span>
+      </div>
+      <div class="fee-line">
+        <span class="fee-key">Protocol fee (0.20% of tokens)</span>
+        <span class="fee-val ${dev?"free":""}" id="feeTokVal">${dev?"FREE":tokenFee()>0?tokenFee()+" tokens":"—"}</span>
+      </div>
+      <div class="fee-line">
+        <span class="fee-key">You lock (net tokens)</span>
+        <span class="fee-val green" id="feeNetVal">${netTokens()>0?netTokens()+" tokens":"—"}</span>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn-primary" onclick="goStep(3)" ${!LS.tokenMint||!LS.tokenAmount?"disabled":""}>Next Step →</button>
+    </div>`;
 }
 
-async function createLock(){
-
-try{
-
-const button =
-document.getElementById("createLockButton");
-
-button.innerText = "Processing...";
-button.classList.add("loading");
-
-if(!wallet){
-
-alert("Connect wallet first");
-
-button.innerText = "Create Lock";
-button.classList.remove("loading");
-
-return;
-
+// STEP 3
+function renderStep3() {
+  return `
+    <div class="card-step-num">STEP 03</div>
+    <div class="card-title">Recipients</div>
+    <div class="card-sub">Add wallets that receive tokens after unlock.</div>
+    <div id="recipientList">
+      ${LS.recipients.map((r,i) => `
+        <div class="recipient-row">
+          <input class="form-input" placeholder="Recipient wallet address ${i+1}" value="${r.address}" oninput="LS.recipients[${i}].address=this.value"/>
+          ${LS.recipients.length > 1 ? `<button class="btn-remove" onclick="removeRecipient(${i})">×</button>` : ""}
+        </div>`).join("")}
+    </div>
+    <button class="btn-add-row" onclick="addRecipient()">+ Add Recipient</button>
+    <div class="nav-row">
+      <button class="btn-secondary" onclick="goStep(2)">← Back</button>
+      <button class="btn-primary" onclick="goStep(4)">Next Step →</button>
+    </div>`;
 }
 
-const token =
-document.getElementById("tokenName").value;
-
-const mint =
-document.getElementById("tokenMint").value;
-
-const amount =
-parseFloat(
-document.getElementById("tokenAmount").value
-);
-
-const days =
-parseInt(
-document.getElementById("lockDays").value
-);
-
-if(!token || !mint || !amount){
-
-alert("Please complete all fields");
-
-button.innerText = "Create Lock";
-button.classList.remove("loading");
-
-return;
-
+// STEP 4
+function renderStep4() {
+  const dev    = isDev();
+  const sAmt   = satFeeAmt();
+  const lockDesc = LS.lockType==="time" ? `${LS.duration} ${LS.durationUnit}` : `$${LS.unlockPrice} USD`;
+  const feeLabel = dev ? "FREE (dev mode)" : LS.feeMethod==="sol" ? `${SATURN.LOCK_SOL_FEE} SOL` : `${sAmt.toLocaleString()} $SATURN (50% off!)`;
+  return `
+    <div class="card-step-num">STEP 04</div>
+    <div class="card-title">Review & Confirm</div>
+    <div class="card-sub">Double-check everything before signing.</div>
+    <div class="review-table">
+      <div class="review-row"><span class="review-key">Lock Type</span><span class="review-val">${LS.lockType==="price"?"Price-Based":"Time-Based"}</span></div>
+      <div class="review-row"><span class="review-key">Token Mint</span><span class="review-val">${LS.tokenMint||"—"}</span></div>
+      <div class="review-row"><span class="review-key">Lock Amount</span><span class="review-val">${LS.tokenAmount||"—"} tokens</span></div>
+      <div class="review-row"><span class="review-key">${LS.lockType==="time"?"Duration":"Unlock Price"}</span><span class="review-val">${lockDesc}</span></div>
+      <div class="review-row"><span class="review-key">Recipients</span><span class="review-val">${LS.recipients.filter(r=>r.address).length}</span></div>
+      <div class="review-row"><span class="review-key">Net Tokens Locked</span><span class="review-val" style="color:var(--gold)">${netTokens()}</span></div>
+    </div>
+    <div class="fee-summary">
+      <div class="fee-summary-title">💸 Fees Charged On Confirm</div>
+      <div class="fee-line"><span class="fee-key">Creation fee</span><span class="fee-val ${dev?"free":LS.feeMethod==="sat"?"gold":"purple"}">${feeLabel}</span></div>
+      <div class="fee-line"><span class="fee-key">Protocol token fee</span><span class="fee-val ${dev?"free":""}">${dev?"FREE":tokenFee()+" tokens"}</span></div>
+    </div>
+    ${LS.error ? `<div class="alert alert-red">⚠️ ${LS.error}</div>` : ""}
+    ${dev ? `<div class="alert alert-red">🛸 Dev mode — no fees charged. Solana gas only.</div>` :
+      `<div class="alert alert-amber">⚠️ Your wallet will approve ${LS.feeMethod==="sol"?`<strong>${SATURN.LOCK_SOL_FEE} SOL</strong>`:`<strong>${sAmt.toLocaleString()} $SATURN</strong>`} then the 0.20% token fee.</div>`}
+    ${!WALLET.pubkey ? '<div class="alert alert-blue">🔌 Connect your wallet above to proceed.</div>' : ""}
+    <div class="nav-row">
+      <button class="btn-secondary" onclick="goStep(3)" ${LS.loading?"disabled":""}>← Back</button>
+      <button class="btn-primary" onclick="confirmLock()" ${LS.loading||!WALLET.pubkey?"disabled":""}>
+        ${LS.loading ? '<span class="tx-spinner gold"></span> Signing...' : "🔒 Sign & Lock Tokens"}
+      </button>
+    </div>`;
 }
 
-if(!devMode){
-
-const feePaid =
-await sendLockFee();
-
-if(!feePaid){
-
-button.innerText = "Create Lock";
-button.classList.remove("loading");
-
-return;
-
+// LOADING
+function renderLoading() {
+  const dev = isDev();
+  const txList = dev
+    ? ["Processing free dev lock...", "Confirming..."]
+    : [LS.feeMethod==="sol"?"Sending 0.5 SOL creation fee...":"Sending $SATURN creation fee (50% off)...",
+       "Sending 0.20% protocol token fee...", "Confirming on-chain..."];
+  return `
+    <div class="card-step-num">PROCESSING</div>
+    <div class="card-title">${dev?"Locking (Dev Mode)...":"Locking Tokens..."}</div>
+    <div class="card-sub">${dev?"Processing free dev lock...":"Approve each transaction in your wallet. Don't close this page."}</div>
+    <div style="margin-bottom:18px">
+      ${txList.map((t,i) => {
+        const st = i+1 < LS.loadingStep ? "done" : i+1 === LS.loadingStep ? "active" : "pending";
+        return `<div class="tx-step">
+          <div class="tx-dot tx-dot-${st}"></div>
+          <span class="tx-label ${st}">${t}</span>
+          ${st==="done"?'<span style="color:var(--green);font-size:12px">✓</span>':""}
+          ${st==="active"?'<span class="tx-spinner gold"></span>':""}
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="alert ${dev?"alert-red":"alert-amber"}">${dev?"🛸 Dev mode — no fees":"👛 Check your wallet for approval prompts"}</div>`;
 }
 
-treasuryRevenue += 0.3;
-
+// SUCCESS
+function renderSuccess() {
+  const dev = isDev();
+  return `
+    <div class="result-screen">
+      <div class="result-emoji">🎉</div>
+      <div class="result-title" style="color:var(--gold)">Tokens Locked!</div>
+      <div class="result-sub">
+        ${dev ? 'Locked <strong>FREE</strong> in dev mode! Only Solana gas was charged.'
+              : LS.feeMethod==="sat" ? 'Saved <strong style="color:var(--gold)">50%</strong> by paying with $SATURN!'
+              : `Creation fee of <strong>${SATURN.LOCK_SOL_FEE} SOL</strong> collected.`}
+      </div>
+      ${LS.txSig ? `<div class="tx-card"><div class="tx-card-label">Creation Fee Tx</div><a class="tx-link" href="https://solscan.io/tx/${LS.txSig}" target="_blank">${LS.txSig}</a></div>` : ""}
+      ${LS.txSig2 ? `<div class="tx-card"><div class="tx-card-label">Protocol Fee Tx</div><a class="tx-link" href="https://solscan.io/tx/${LS.txSig2}" target="_blank">${LS.txSig2}</a></div>` : ""}
+      <div class="alert alert-gold">✅ Fees routed to protocol treasury: CqXPQf...yzFb</div>
+      <button class="btn-primary" style="margin:16px auto 0" onclick="resetLocker()">🔒 Create Another Lock</button>
+    </div>`;
 }
 
-const unlockDate =
-new Date(
-Date.now() + days * 86400000
-);
+// ── ACTIONS ───────────────────────────────────────────────────────
+function pickLock(t)        { LS.lockType = t; renderCard(); }
+function goStep(n)          { LS.step = n; LS.error = ""; renderPage(); }
+function setFeeMethod(m)    { LS.feeMethod = m; renderCard(); }
+function addRecipient()     { LS.recipients.push({ address: "" }); renderCard(); }
+function removeRecipient(i) { LS.recipients.splice(i, 1); renderCard(); }
 
-locks.unshift({
-
-token,
-mint,
-amount,
-days,
-unlockDate
-
-});
-
-renderLocks();
-
-updateAnalytics();
-
-button.innerText = "Create Lock";
-button.classList.remove("loading");
-
-alert(
-devMode
-? "✅ DEV LOCK CREATED"
-: "✅ Lock Created Successfully"
-);
-
-}catch(err){
-
-console.error(err);
-
-alert("Lock creation failed");
-
-document.getElementById("createLockButton")
-.innerText = "Create Lock";
-
-document.getElementById("createLockButton")
-.classList.remove("loading");
-
+function updateFeeSummary() {
+  const t = document.getElementById("feeTokVal");
+  const n = document.getElementById("feeNetVal");
+  if (t && !isDev()) t.textContent = tokenFee()>0 ? tokenFee()+" tokens" : "—";
+  if (n) n.textContent = netTokens()>0 ? netTokens()+" tokens" : "—";
 }
 
+async function confirmLock() {
+  if (!WALLET.pubkey) { LS.error = "Connect your wallet first."; renderCard(); return; }
+  LS.loading = true; LS.error = ""; LS.loadingStep = 1; renderCard();
+
+  // DEV MODE: skip all fees
+  if (isDev()) {
+    await new Promise(r => setTimeout(r, 1200));
+    LS.loadingStep = 2; renderCard();
+    await new Promise(r => setTimeout(r, 800));
+    LS.step = 5; LS.loading = false; renderPage();
+    return;
+  }
+
+  try {
+    // Step 1: Creation fee (SOL or $SATURN)
+    let sig1;
+    if (LS.feeMethod === "sol") {
+      sig1 = await collectSOLFee(SATURN.LOCK_SOL_FEE);
+    } else {
+      sig1 = await collectSPLFee(SATURN.MINT, satFeeAmt(), SATURN.DECIMALS);
+    }
+    LS.txSig = sig1; LS.loadingStep = 2; renderCard();
+
+    // Step 2: 0.20% token protocol fee
+    try {
+      const sig2 = await collectSPLFee(LS.tokenMint, tokenFee(), 6);
+      LS.txSig2 = sig2;
+    } catch(e) { console.warn("Protocol fee skipped:", e.message); }
+
+    LS.loadingStep = 3; LS.step = 5;
+  } catch(e) {
+    LS.error = e.message || "Transaction failed. Please try again.";
+  } finally {
+    LS.loading = false; renderPage();
+  }
 }
 
-function updateAnalytics(){
-
-const total =
-locks.reduce(
-(a,b)=>a+b.amount,
-0
-);
-
-document.getElementById("totalLocked")
-.innerText =
-total.toLocaleString();
-
-document.getElementById("activeLocks")
-.innerText =
-locks.length;
-
-document.getElementById("treasuryRevenue")
-.innerText =
-treasuryRevenue.toFixed(2)
-+
-" SOL";
-
+function resetLocker() {
+  const pk = WALLET.pubkey;
+  LS = { step:1, lockType:null, tokenMint:"", tokenAmount:"", duration:"30", durationUnit:"days",
+         unlockPrice:"", recipients:[{address:""}], feeMethod:"sol",
+         txSig:null, txSig2:null, loading:false, loadingStep:0, error:"" };
+  renderPage();
 }
 
-function renderLocks(){
-
-const container =
-document.getElementById("lockHistory");
-
-if(locks.length === 0){
-
-container.innerHTML =
-`
-<div class="text-white/40 text-sm">
-No locks created yet.
-</div>
-`;
-
-return;
-
+// ── PAGE SWITCH ───────────────────────────────────────────────────
+function switchPage(p) {
+  document.querySelectorAll(".page").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(x => x.classList.remove("active"));
+  document.getElementById(p==="lock" ? "pageLock" : "pageSwap").classList.add("active");
+  document.getElementById(p==="lock" ? "tabLock" : "tabSwap").classList.add("active");
+  if (p === "swap") initJupiter();
 }
 
-container.innerHTML =
-locks.map(lock=>`
-
-<div class="bg-black/20 rounded-2xl p-4 mb-4">
-
-<div class="flex justify-between">
-
-<div>
-
-<div class="font-bold">
-${lock.token}
-</div>
-
-<div class="text-xs text-white/40 break-all mt-1">
-${lock.mint}
-</div>
-
-</div>
-
-<div class="text-right">
-
-<div class="text-violet-400 font-bold">
-${lock.amount.toLocaleString()}
-</div>
-
-<div class="text-xs text-white/50">
-${lock.days} Days
-</div>
-
-</div>
-
-</div>
-
-<div class="mt-3 text-sm text-white/50">
-
-Unlock:
-${lock.unlockDate.toLocaleDateString()}
-
-</div>
-
-</div>
-
-`).join("");
-
+function initJupiter() {
+  if (!window.Jupiter) { setTimeout(initJupiter, 600); return; }
+  window.Jupiter.init({
+    displayMode: "integrated",
+    integratedTargetId: "jup-terminal",
+    endpoint: SATURN.RPC,
+    defaultExplorer: "Solscan",
+    formProps: {
+      initialInputMint: "So11111111111111111111111111111111111111112",
+      initialOutputMint: SATURN.MINT === "PASTE_SATURN_MINT_HERE"
+        ? "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        : SATURN.MINT,
+    },
+    onSuccess: ({ txid }) => {
+      saturnToast("✅ Swap complete! You now have $SATURN.");
+      setTimeout(() => switchPage("lock"), 1500);
+    },
+  });
 }
 
-updateFees();
+// Called by saturn-core.js after wallet connects
+function onWalletConnected(pubkey) { renderCard(); }
+function onWalletDisconnected()    { renderCard(); }
 
+// Init
+renderPage();
 </script>
-
-<!-- SATURN FILES -->
-<script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
-<script src="./js/saturn-config.js"></script>
-<script src="./js/saturn-wallet.js"></script>
-<script src="./js/saturn-fees.js"></script>
-
 </body>
 </html>
